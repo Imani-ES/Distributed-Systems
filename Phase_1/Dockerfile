@@ -6,8 +6,11 @@ ENV HOME /root
 
 RUN apt-get updsate --fix-missing
 COPY . .
-RUN npm install #install dependencies
+
+RUN npm install express
+RUN npm install express-formidable
+RUN npm install socket.io
 
 EXPOSE 8000 
 
-CMD #Runs command after container made
+CMD node server.js
