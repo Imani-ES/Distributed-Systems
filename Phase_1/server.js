@@ -9,9 +9,9 @@ const port  = process.env.Port || 3000;
 //database init
 const { MongoClient } = require("mongodb");
 const { WSATYPE_NOT_FOUND } = require('constants');
-const imani_dbPass = process.env.DB_PASS_442;
-const imani_uri = 'mongodb+srv://'+'486'+':486'+'@cluster0.k7tia.mongodb.net/'+'databasename';
-const imani_client = new MongoClient(imani_uri,{keepAlive: 1});
+const dbPass = process.env.DB_PASS_442;
+const uri = 'mongodb+srv://'+'486'+':486'+'@cluster0.k7tia.mongodb.net/'+'databasename';
+const client = new MongoClient(uri,{keepAlive: 1});
 
 chat_history = ['Welcome all'];
 /*
@@ -39,12 +39,12 @@ app.get("/phase_1", (req, res) => res.sendFile(__dirname + "/index.html"));
 
 /*
 async function get_chat_history() {
-await imani_client.connect();
+await client.connect();
 console.log("MongoDB connected");
-const db = imani_client.db("Movies");
-const movies = db.collection('MovieData');
+const db = client.db("dbname");
+const chat = db.collection('collectionname');
 
-movies.findOne({room_info:room_name},{}, function(err, result) {
+chat.findOne({room_info:room_name},{}, function(err, result) {
   if (err) throw err;
    return  (1);
 }); 
