@@ -4,7 +4,7 @@ RUN apt-get update
 
 ENV HOME /root
 
-RUN apt-get updsate --fix-missing
+RUN apt-get update --fix-missing
 COPY . .
 
 RUN npm install express
