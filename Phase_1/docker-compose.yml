@@ -4,9 +4,22 @@ services:
     build: ./server
   ports:
     - '8081: 3000'
+  
   client:
     build: ./client
     environment:
       WAIT_HOSTS: server
     ports:
       - '8080:8000'
+
+# This is just an idea, don't worry about this
+#  app_1:
+#    build: 
+#      context: ../App_1
+#    ports:
+#      - '3000:3000'
+#  app_2:
+#    build:
+#      context: ../App_2
+#    ports:
+#      - '5050:3000'
