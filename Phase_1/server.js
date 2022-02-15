@@ -4,6 +4,7 @@ const http = require("http")
 var server = http.createServer(app);
 const socketIO = require("socket.io")
 var io = socketIO(server);
+//process.env.Port will be passed to the docker container 
 const port  = process.env.Port || 3000;
 
 //database init

@@ -11,6 +11,8 @@ RUN npm install express
 RUN npm install express-formidable
 RUN npm install socket.io
 RUN npm install mongodb
-EXPOSE 8000 
 
 CMD node server.js
+
+#pass env variable to container
+#https://www.cloudsavvyit.com/14081/how-to-pass-environment-variables-to-docker-containers/
