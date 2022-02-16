@@ -4,14 +4,14 @@ const http = require("http")
 var server = http.createServer(app);
 const socketIO = require("socket.io")
 var io = socketIO(server);
+
 //process.env.Port will be passed to the docker container 
 const port  = process.env.Port || 3000;
+const DB_Name = process.env.DB_Name;
+const DB_Port = process.env.DB_Port;
 
 //database init
-const { MongoClient } = require("mongodb");
-const { WSATYPE_NOT_FOUND } = require('constants');
-const dbPass = process.env.DB_PASS_442;
-const uri = 'mongodb+srv://'+'486'+':486'+'@cluster0.k7tia.mongodb.net/'+'databasename';
+const database = 'mongodb://mongodb:27017';
 const client = new MongoClient(uri,{keepAlive: 1});
 
 chat_history = ['Welcome all'];

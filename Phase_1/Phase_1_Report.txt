@@ -10,3 +10,5 @@ By: Imani Muhammad-Graham, Connor McGregor
 #Validation
 
 #References
+https://www.tutorialworks.com/container-networking/
+https://www.bmc.com/blogs/mongodb-docker-container/

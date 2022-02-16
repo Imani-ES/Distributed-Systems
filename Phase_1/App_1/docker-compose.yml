@@ -1,0 +1,35 @@
+version: '3.3'
+services:
+  app_1:
+    image: getting-started
+    container_name: App
+    networks:
+        - mongo_test_bus
+    build: 
+      context: .
+    ports:
+      - '3000:3000'
+      - '27017:27017'
+    environment:
+      - Port=3000
+      - DB_Port=27017
+      - DB_connect=mongodb:27017mongodb://imani:connor@mongodb
+
+  mongo:
+      image: mongo
+      container_name: mongodb
+      restart: unless-stopped
+      #networks:
+      #  - mongo_test_bus
+      environment:
+        MONGO_INITDB_ROOT_USERNAME: imani
+        MONGO_INITDB_ROOT_PASSWORD: connor
+      volumes:
+        - /486/databases/mongo/test
+      ports:
+        - '27017:27017'
+networks:
+    mongo_test_bus:
+      name: mongo_test_bus
+      driver: bridge
+  
