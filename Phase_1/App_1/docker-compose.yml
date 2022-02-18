@@ -6,7 +6,7 @@ services:
     networks:
         - mongo_test_bus
     build: 
-      context: C:\Users\ASC Guest\Documents\GitHub\Distributed-Systems\Phase_1\App_1
+      context: .
     ports:
       - '3000:3000'
     environment:

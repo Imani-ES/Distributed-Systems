@@ -6,7 +6,7 @@ var server = http.createServer(app);
 const socketIO = require("socket.io")
 var io = socketIO(server);
 
-//process.env.Port will be passed to the docker container 
+//Environment Variables set up by Docker compose
 const port  = process.env.Port || 3000;
 
 //database stuff
@@ -18,6 +18,8 @@ db = {}
 
 //files used
 app.use('/phase_1.css', express.static(__dirname + '/phase_1.css'));
+
+//send client HTML file
 app.get("/phase_1", (req, res) => res.sendFile(__dirname + "/index.html"));
 
 //socket functionality
