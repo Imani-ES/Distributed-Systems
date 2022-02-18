@@ -1,57 +1,66 @@
 const express = require("express");
 const app = express();
 const http = require("http")
+const MongoClient = require('mongodb').MongoClient;
 var server = http.createServer(app);
 const socketIO = require("socket.io")
 var io = socketIO(server);
 
 //process.env.Port will be passed to the docker container 
 const port  = process.env.Port || 3000;
-const DB_Name = process.env.DB_Name;
-const DB_Port = process.env.DB_Port;
 
-//database init
-const database = 'mongodb://mongodb:27017';
-const client = new MongoClient(uri,{keepAlive: 1});
+//database stuff
+const uri = process.env.DB_connect || "mongodb://root:rootpwd@localhost:27017";
 
+//global variables
 chat_history = ['Welcome all'];
-/*
-if(get_chat_history()){
-    console.log("Got room data");
-}
-*/
+db = {}
+
+//files used
 app.use('/phase_1.css', express.static(__dirname + '/phase_1.css'));
 app.get("/phase_1", (req, res) => res.sendFile(__dirname + "/index.html"));
 
+//socket functionality
  io.on("connection", function(socket) {
-  io.emit('chat_history', JSON.stringify(chat_history,replacer));
+   
+  //initial connection
+  console.log("User Connected")
+   io.emit('chat_history', JSON.stringify(chat_history,replacer));
+   
+   //messages
+   socket.on("chat", function(msg){
 
-  socket.on("chat", function(msg){
-    console.log("Processing chat from User: " + msg);
-    chat_history.push(msg);
-    //find a way to push to database collection
-    io.emit('chat_history', JSON.stringify(chat_history,replacer));
-  });
+     console.log("Processing chat: " + msg);
+     chat_history.push(msg);
+
+     //database connect
+     console.log("Conecting to mongo");
+     MongoClient.connect(uri,function(err,_db){
+       if (err) throw err;
+       db = _db;
+       console.log("Connected to Mongo!!");
+     })
+
+     //response
+     io.emit('chat_history', JSON.stringify(chat_history,replacer));
+    });
 
 
  });
 
- server.listen(port, () => console.log("listening on http://localhost:"+port));
+// async function get_chat_history() {
+// await client.connect();
+// console.log("MongoDB connected");
+// const db = client.db("dbname");
+// const chat = db.collection('collectionname');
 
-/*
-async function get_chat_history() {
-await client.connect();
-console.log("MongoDB connected");
-const db = client.db("dbname");
-const chat = db.collection('collectionname');
+// chat.findOne({room_info:room_name},{}, function(err, result) {
+//   if (err) throw err;
+//   return  (1);
+// }); 
+// return 1;
+// }
 
-chat.findOne({room_info:room_name},{}, function(err, result) {
-  if (err) throw err;
-   return  (1);
-}); 
-return 0;
-}
-*/
 
 //JSON wrapper & unwrapper functions
 function replacer(key, value) {
@@ -72,3 +81,4 @@ function reviver(key, value) {
   }
   return value;
 }
+server.listen(port, () => console.log("listening on http://localhost:"+port));

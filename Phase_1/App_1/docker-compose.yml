@@ -9,23 +9,23 @@ services:
       context: .
     ports:
       - '3000:3000'
-      - '27017:27017'
     environment:
       - Port=3000
-      - DB_Port=27017
-      - DB_connect=mongodb:27017mongodb://imani:connor@mongodb
+      - DB_connect= "mongodb://root:rootpwd@localhost:27017"
 
+    depends_on:
+      mongo:  
+        condition:  service_started
+    
   mongo:
       image: mongo
       container_name: mongodb
       restart: unless-stopped
-      #networks:
-      #  - mongo_test_bus
+      networks:
+        - mongo_test_bus
       environment:
-        MONGO_INITDB_ROOT_USERNAME: imani
-        MONGO_INITDB_ROOT_PASSWORD: connor
-      volumes:
-        - /486/databases/mongo/test
+        MONGO_INITDB_ROOT_USERNAME: root
+        MONGO_INITDB_ROOT_PASSWORD: rootpwd
       ports:
         - '27017:27017'
 networks:
