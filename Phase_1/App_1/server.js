@@ -10,8 +10,8 @@ var io = socketIO(server);
 const port  = process.env.Port || 3000;
 
 //database stuff
-const uri = process.env.DB_connect || "mongodb://root:rootpwd@localhost:27017";
-
+const uri = process.env.DB_connect || "mongodb://root:rootpwd@127.0.0.1:27017";
+console.log("Database Uri: " + uri);
 //global variables
 chat_history = ['Welcome all'];
 db = {}
@@ -35,12 +35,16 @@ app.get("/phase_1", (req, res) => res.sendFile(__dirname + "/index.html"));
 
      //database connect
      console.log("Conecting to mongo");
-     MongoClient.connect(uri,function(err,_db){
+     MongoClient.connect(uri,{ useNewUrlParser: true})
+     /*
+      function(err,_db){
+      useUnifiedTopology: true,
+     
        if (err) throw err;
        db = _db;
        console.log("Connected to Mongo!!");
      })
-
+     */
      //response
      io.emit('chat_history', JSON.stringify(chat_history,replacer));
     });

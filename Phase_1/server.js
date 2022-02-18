@@ -27,7 +27,7 @@ app.get("/phase_1", (req, res) => res.sendFile(__dirname + "/index.html"));
   io.emit('chat_history', JSON.stringify(chat_history,replacer));
 
   socket.on("chat", function(msg){
-    console.log("Processing chat from User: " + msg);
+    console.log("This shouldnt be here: Processing chat from User: " + msg);
     chat_history.push(msg);
     //find a way to push to database collection
     io.emit('chat_history', JSON.stringify(chat_history,replacer));

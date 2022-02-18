@@ -6,12 +6,12 @@ services:
     networks:
         - mongo_test_bus
     build: 
-      context: .
+      context: C:\Users\ASC Guest\Documents\GitHub\Distributed-Systems\Phase_1\App_1
     ports:
       - '3000:3000'
     environment:
       - Port=3000
-      - DB_connect= "mongodb://root:rootpwd@localhost:27017"
+      - DB_connect= 'mongodb://root:rootpwd@127.0. 0.1:27017/test'
 
     depends_on:
       mongo:  
@@ -24,6 +24,7 @@ services:
       networks:
         - mongo_test_bus
       environment:
+        MONGO_INITDB_DATABASE: test
         MONGO_INITDB_ROOT_USERNAME: root
         MONGO_INITDB_ROOT_PASSWORD: rootpwd
       ports:
