@@ -1,4 +1,5 @@
 const express = require("express");
+var assert = require('assert');
 const app = express();
 const http = require("http")
 const MongoClient = require('mongodb').MongoClient;
@@ -7,11 +8,27 @@ const socketIO = require("socket.io")
 var io = socketIO(server);
 
 //Environment Variables set up by Docker compose
-const port  = process.env.Port || 3000;
+const port  = process.env.Port;
+const uri = process.env.DB_connect.toString();
+const database_name = process.env.db_name.toString();
+const app_name = process.env.app_name.toString();
 
-//database stuff
-const uri = process.env.DB_connect || "mongodb://root:rootpwd@127.0.0.1:27017";
-console.log("Database Uri: " + uri);
+//Create Database
+MongoClient.connect(uri+database_name, function(err, _db) {
+  assert.equal(null, err);
+  console.log("Mongo Connected");
+  _db.createCollection("chat_collection", function(err, res) {
+    if (err) throw err;
+    console.log("Collection created!");
+  });
+  var chat_history = ['Welcome all'];
+  db._db("test").collection("char_collection").insertOne(chat_history, function(err, res){
+    if (err) throw err;
+    console.log("History element instantiated");
+  })
+  db.close();
+});
+
 //global variables
 chat_history = ['Welcome all'];
 db = {}
@@ -37,17 +54,14 @@ app.get("/phase_1", (req, res) => res.sendFile(__dirname + "/index.html"));
 
      //database connect
      console.log("Conecting to mongo");
-     MongoClient.connect(uri,{ useNewUrlParser: true})
-     /*
-      function(err,_db){
-      useUnifiedTopology: true,
-     
-       if (err) throw err;
-       db = _db;
-       console.log("Connected to Mongo!!");
-     })
-     */
-     //response
+     MongoClient.connect(uri, function(err, _db) {
+      assert.equal(null, err);
+      console.log("Connected to mongo");
+      var db = _db.db(database_name);
+      var insert = {chat:""}
+      db.close();
+      console.log("Disconnected from mongo")
+    });
      io.emit('chat_history', JSON.stringify(chat_history,replacer));
     });
 

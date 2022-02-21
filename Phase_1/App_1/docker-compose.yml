@@ -11,7 +11,9 @@ services:
       - '3000:3000'
     environment:
       - Port=3000
-      - DB_connect= 'mongodb://root:rootpwd@127.0.0.1:27017/test'
+      - db_name=test
+      - app_name=app_1
+      - DB_connect=mongodb://root:rootpwd@mongodb:27017/test
 
     depends_on:
       mongo:  
