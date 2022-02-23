@@ -14,19 +14,21 @@ const database_name = process.env.db_name.toString();
 const app_name = process.env.app_name.toString();
 
 //Create Database
-MongoClient.connect(uri+database_name, function(err, _db) {
-  assert.equal(null, err);
+MongoClient.connect(uri, function(err, db) {
+  if (err) throw err;
   console.log("Mongo Connected");
+  _db = db.db("test");
   _db.createCollection("chat_collection", function(err, res) {
     if (err) throw err;
     console.log("Collection created!");
   });
-  var chat_history = ['Welcome all'];
-  db._db("test").collection("char_collection").insertOne(chat_history, function(err, res){
+  var chat_history = {chat_history:['Welcome all']};
+  _db.collection("chat_collection").insertOne(chat_history, function(err, res){
     if (err) throw err;
     console.log("History element instantiated");
   })
-  db.close();
+  //db.close();
+  console.log("Mongo Connection closed");
 });
 
 //global variables
@@ -57,9 +59,21 @@ app.get("/phase_1", (req, res) => res.sendFile(__dirname + "/index.html"));
      MongoClient.connect(uri, function(err, _db) {
       assert.equal(null, err);
       console.log("Connected to mongo");
-      var db = _db.db(database_name);
-      var insert = {chat:""}
-      db.close();
+      var db = _db.db(database_name)
+      var chat_history = {chat_history:chat_history};
+      //check if database is empty
+      var empty = 1
+      dbo.collection("chat_collection").findOne({chat_history}, function(err, result) {
+        if (err) throw err;
+        if(result){empty = 0;}
+      });
+      if(empty){
+        db.collection("chat_collection").insertOne(chat_history, function(err, res){
+          assert.equal(null, err);
+          console.log("Chat history logged");
+        });
+      }       
+      db.close;
       console.log("Disconnected from mongo")
     });
      io.emit('chat_history', JSON.stringify(chat_history,replacer));
@@ -67,20 +81,6 @@ app.get("/phase_1", (req, res) => res.sendFile(__dirname + "/index.html"));
 
 
  });
-
-// async function get_chat_history() {
-// await client.connect();
-// console.log("MongoDB connected");
-// const db = client.db("dbname");
-// const chat = db.collection('collectionname');
-
-// chat.findOne({room_info:room_name},{}, function(err, result) {
-//   if (err) throw err;
-//   return  (1);
-// }); 
-// return 1;
-// }
-
 
 //JSON wrapper & unwrapper functions
 function replacer(key, value) {

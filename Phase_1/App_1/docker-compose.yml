@@ -13,7 +13,7 @@ services:
       - Port=3000
       - db_name=test
       - app_name=app_1
-      - DB_connect=mongodb://root:rootpwd@mongodb:27017/test
+      - DB_connect=mongodb://root:rootpwd@mongodb:27017
 
     depends_on:
       mongo:  
