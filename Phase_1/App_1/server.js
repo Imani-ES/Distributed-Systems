@@ -18,17 +18,20 @@ MongoClient.connect(uri, function(err, db) {
   if (err) throw err;
   console.log("Mongo Connected");
   _db = db.db("test");
+  /*Apparently referencing the collection automatically creates it
   _db.createCollection("chat_collection", function(err, res) {
     if (err) throw err;
-    console.log("Collection created!");
+   
   });
+  */
   var chat_history = {chat_history:['Welcome all']};
   _db.collection("chat_collection").insertOne(chat_history, function(err, res){
     if (err) throw err;
+    console.log("Collection created!");
     console.log("History element instantiated");
   })
   //db.close();
-  console.log("Mongo Connection closed");
+  //console.log("Mongo Connection closed");
 });
 
 //global variables
@@ -63,7 +66,7 @@ app.get("/phase_1", (req, res) => res.sendFile(__dirname + "/index.html"));
       var chat_history = {chat_history:chat_history};
       //check if database is empty
       var empty = 1
-      dbo.collection("chat_collection").findOne({chat_history}, function(err, result) {
+      db.chat_collection.findOne({chat_history}, function(err, result) {
         if (err) throw err;
         if(result){empty = 0;}
       });
@@ -73,8 +76,8 @@ app.get("/phase_1", (req, res) => res.sendFile(__dirname + "/index.html"));
           console.log("Chat history logged");
         });
       }       
-      db.close;
-      console.log("Disconnected from mongo")
+      //db.close;
+      //console.log("Disconnected from mongo")
     });
      io.emit('chat_history', JSON.stringify(chat_history,replacer));
     });
