@@ -1,0 +1,52 @@
+version: '3.3'
+services:
+  
+  node_1:
+    image: getting-started
+    container_name: Node_1
+    networks:
+        - node_1
+        - rainbow_bridge
+    build: 
+      context: .
+    ports:
+      - '3000:3000'
+    environment:
+      - Port=3000
+      - db_name=test
+      - app_name=Node_1
+      - DB_connect=mongodb://root:rootpwd@mongodb_1:27017
+    depends_on:
+      mongo:  
+        condition:  service_started
+    
+  mongo:
+      image: mongo
+      container_name: mongodb_1
+      restart: unless-stopped
+      networks:
+        - node_1
+      environment:
+        MONGO_INITDB_DATABASE: test
+        MONGO_INITDB_ROOT_USERNAME: root
+        MONGO_INITDB_ROOT_PASSWORD: rootpwd
+      volumes:
+        - ./data/mongo_1:data/mongo
+      ports:
+        - '27017:27017'
+
+networks:
+#rainbow bridge is the network between nodes
+    rainbow_bridge:
+      name: rainbow_bridge
+      driver: bridge
+#node networks are the networks between database and apps
+    node_1:
+      name: node_1
+      driver: bridge
+    node_2:
+      name: node_2
+      driver: bridge
+    node_3:
+      name: node_3
+      driver: bridge

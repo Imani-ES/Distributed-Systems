@@ -31,7 +31,6 @@ services:
         MONGO_INITDB_ROOT_PASSWORD: rootpwd
       ports:
         - '27017:27017'
-      
 networks:
     mongo_test_bus:
       name: mongo_test_bus
