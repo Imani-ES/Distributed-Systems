@@ -19,7 +19,27 @@ services:
     depends_on:
       mongo:  
         condition:  service_started
-    
+  
+  node_2:
+    image: getting-started
+    container_name: Node_2
+    networks:
+        - node_2
+        - rainbow_bridge
+    build: 
+      context: .
+    ports:
+      - '5050:3000'
+    environment:
+      - Port=3000
+      - db_name=test
+      - app_name=Node_1
+      - DB_connect=mongodb://root:rootpwd@mongodb_2:27017
+      - node1:http://node_1:3000
+    depends_on:
+      mongo:  
+        condition:  service_started
+
   mongo:
       image: mongo
       container_name: mongodb_1
@@ -34,7 +54,21 @@ services:
         - /data/mongo_1
       ports:
         - '27017:27017'
-
+  
+  mongo_2:
+      image: mongo
+      container_name: mongodb_2
+      restart: unless-stopped
+      networks:
+        - node_2
+      environment:
+        MONGO_INITDB_DATABASE: test
+        MONGO_INITDB_ROOT_USERNAME: root
+        MONGO_INITDB_ROOT_PASSWORD: rootpwd
+      volumes:
+        - /data/mongo_2
+      ports:
+        - '8000:27017'
 networks:
 #rainbow bridge is the network between nodes
     rainbow_bridge:
