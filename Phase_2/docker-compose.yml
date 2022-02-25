@@ -11,6 +11,7 @@ services:
       context: .
     ports:
       - '3000:3000'
+      - '5050:5050'
     environment:
       - Port=3000
       - db_name=test
@@ -30,6 +31,7 @@ services:
       context: .
     ports:
       - '5050:3000'
+      - '3000:5050'
     environment:
       - Port=3000
       - db_name=test

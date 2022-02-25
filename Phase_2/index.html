@@ -53,6 +53,10 @@
                 }
             });
 
+            socket.on("greeting", function(msg){
+                console.log(msg);
+            })
+
             //JSON wrapper & unwrapper functions
             function replacer(key, value) {
                 if(value instanceof Map) {
