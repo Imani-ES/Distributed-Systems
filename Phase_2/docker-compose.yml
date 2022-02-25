@@ -31,7 +31,7 @@ services:
         MONGO_INITDB_ROOT_USERNAME: root
         MONGO_INITDB_ROOT_PASSWORD: rootpwd
       volumes:
-        - ./data/mongo_1:data/mongo
+        - /data/mongo_1
       ports:
         - '27017:27017'
 

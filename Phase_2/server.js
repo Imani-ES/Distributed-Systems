@@ -35,7 +35,7 @@ MongoClient.connect(uri, function(err, db) {
   app.use('/phase_1.css', express.static(__dirname + '/phase_1.css'));
 
   //send client HTML file
-  app.get("/phase_1", (req, res) => res.sendFile(__dirname + "/index.html"));
+  app.get("/phase_2", (req, res) => res.sendFile(__dirname + "/index.html"));
 
   //socket functionality
   io.on("connection", function(socket) {
