@@ -69,6 +69,11 @@ MongoClient.connect(uri, function(err, db) {
 
   });
 
+function check_data(){
+  //Check database's chathistory and make sure we're updated
+  
+}
+
 //JSON wrapper & unwrapper functions
 function replacer(key, value) {
   if(value instanceof Map) {
