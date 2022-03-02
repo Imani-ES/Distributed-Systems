@@ -1,13 +1,39 @@
 version: '3.3'
 services:
-  server:
-    build: ./server
-  ports:
-    - '8081: 3000'
-  
-  client:
-    build: ./client
-    environment:
-      WAIT_HOSTS: server
+  app_1:
+    image: getting-started
+    container_name: App
+    networks:
+        - mongo_test_bus
+    build: 
+      context: .
     ports:
-      - '8080:8000'
+      - '3000:3000'
+    environment:
+      - Port=3000
+      - db_name=test
+      - app_name=app_1
+      - DB_connect=mongodb://root:rootpwd@mongodb:27017
+
+    depends_on:
+      mongo:  
+        condition:  service_started
+    
+  mongo:
+      image: mongo
+      container_name: mongodb
+      restart: unless-stopped
+      networks:
+        - mongo_test_bus
+      environment:
+        MONGO_INITDB_DATABASE: test
+        MONGO_INITDB_ROOT_USERNAME: root
+        MONGO_INITDB_ROOT_PASSWORD: rootpwd
+      ports:
+        - '27017:27017'
+      
+networks:
+    mongo_test_bus:
+      name: mongo_test_bus
+      driver: bridge
+  
