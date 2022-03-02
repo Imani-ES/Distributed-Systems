@@ -10,6 +10,7 @@ COPY . .
 RUN npm install express
 RUN npm install express-formidable
 RUN npm install socket.io
+RUN npm install socket.io-client
 RUN npm install mongodb
 
 CMD node server.js
