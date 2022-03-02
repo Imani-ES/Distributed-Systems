@@ -40,15 +40,17 @@ chat_history = ['Welcome all'];
 db = {}
 
 //node functionality
+//node server
+//node client
 
 
+
+//web client functionality
 //files used
 app.use('/phase_1.css', express.static(__dirname + '/phase_1.css'));
 //send client HTML file
 app.get("/phase_2", (req, res) => res.sendFile(__dirname + "/index.html"));
 
-
-//web client functionality
 c_io.on("connection", function(socket) {
   
   //initial connection
