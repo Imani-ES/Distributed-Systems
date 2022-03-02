@@ -11,11 +11,11 @@ services:
       context: .
     ports:
       - '3000:3000'
-      - '5050:5050'
     environment:
       - Port=3000
       - db_name=test
       - app_name=Node_1
+      - lead=yes
       - DB_connect=mongodb://root:rootpwd@mongodb_1:27017
     depends_on:
       mongo:  
@@ -30,12 +30,12 @@ services:
     build: 
       context: .
     ports:
-      - '5050:3000'
-      - '3000:5050'
+      - '5050:5050'
     environment:
       - Port=3000
       - db_name=test
       - app_name=Node_1
+      - lead=no
       - DB_connect=mongodb://root:rootpwd@mongodb_2:27017
       - node1:http://node_1:3000
     depends_on:

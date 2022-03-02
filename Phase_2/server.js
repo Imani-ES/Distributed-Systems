@@ -1,13 +1,17 @@
 //Design Reference
 //https://app.diagrams.net/#G1D0nWAEBz9R4ezVkePmG-yefGfC8cGWi9
 const express = require("express");
-var assert = require('assert');
-const app = express();
-const http = require("http")
-const MongoClient = require('mongodb').MongoClient;
-var server = http.createServer(app);
 const socketIO = require("socket.io")
-var io = socketIO(server);
+var assert = require('assert');
+const http = require("http")
+const app = express();
+const MongoClient = require('mongodb').MongoClient;
+//client
+var c_server = http.createServer(app);
+var c_io = socketIO(c_server);
+//node
+var n_server = http.createServer(app);
+var n_io = socketIO(n_server);
 
 //Environment Variables set up by Docker compose
 const port  = process.env.Port;
@@ -15,6 +19,7 @@ const uri = process.env.DB_connect.toString();
 const database_name = process.env.db_name.toString();
 const app_name = process.env.app_name.toString();
 var chat_counter = 0;
+const lead = process.env.lead
 
 //Create Database
 MongoClient.connect(uri, function(err, db) {
@@ -34,20 +39,22 @@ MongoClient.connect(uri, function(err, db) {
 chat_history = ['Welcome all'];
 db = {}
 
+//node functionality
+
+
 //files used
 app.use('/phase_1.css', express.static(__dirname + '/phase_1.css'));
-
 //send client HTML file
 app.get("/phase_2", (req, res) => res.sendFile(__dirname + "/index.html"));
 
 
-//client functionality
-io.on("connection", function(socket) {
+//web client functionality
+c_io.on("connection", function(socket) {
   
   //initial connection
   console.log("User Connected")
-  io.emit('greetings',JSON.stringify("Greetings from: "+app_name))
-  io.emit('chat_history', JSON.stringify(chat_history,replacer));
+  c_io.emit('greetings',JSON.stringify("Greetings from: "+app_name))
+  c_io.emit('chat_history', JSON.stringify(chat_history,replacer));
   
   //messages
   socket.on("chat", function(msg){
@@ -68,7 +75,7 @@ io.on("connection", function(socket) {
       });
       chat_counter += 1;
     });
-    io.emit('chat_history', JSON.stringify(chat_history,replacer));
+    c_io.emit('chat_history', JSON.stringify(chat_history,replacer));
     });
 
 
@@ -98,4 +105,4 @@ function reviver(key, value) {
   }
   return value;
 }
-server.listen(port, () => console.log("listening on http://localhost:"+port));
+c_server.listen(port, () => console.log("listening on http://localhost:"+port));
