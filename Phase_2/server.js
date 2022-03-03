@@ -14,18 +14,21 @@ const rainbow_bridge = process.env.rainbow_bridge
 //Middleware
 const express = require("express");
 const socketIO = require("socket.io")
+const socket_client = require("socket.io-client");
 var assert = require('assert');
 const http = require("http")
 const app = express();
 const MongoClient = require('mongodb').MongoClient;
+
 //client
-var c_server = http.createServer(app);
-var c_io = socketIO(c_server);
+const c_server = http.createServer(app);
+const c_io = socketIO(c_server);
+
 //node
+const n_io_client;
 
-const node_client = //require("socket.io-client")("http://"+host+":"+rainbow_bridge);
-const n_server = //require("socket.io")("http://"+host+":"+rainbow_bridge);
-
+const n_server =  http.createServer(app); 
+const n_io_server = socketIO(http);
 
 //Create Database
 MongoClient.connect(uri, function(err, db) {
@@ -81,40 +84,35 @@ if(host == app_name){
 
 
   });
+
   c_server.listen(port, () => console.log("listening on http://localhost:"+port));
   
- /* 
-  n_server.on("connection",function(socket){
-    n_server.emit('new node has joined');
+  //node server
+  n_io_server.on("connection",function(socket){
+    n_io_server.emit('server_to_server');
     console.log("new node has joined");
-    socket.on("server_to_server", function(msg){
-      console.log("server to server babyyyyyyyy")
-    });
+    
     socket.on("heiarchy", function(msg){
       console.log("delegations")
     });
   });
 
-  n_server.listen(rainbow_bridge,host,() => console.log("Leader listening on http://"+host+":"+rainbow_bridge))
-  */
+  n_server.listen(rainbow_bridge,host,() => console.log("Leader listening on http://"+host+":"+rainbow_bridge));
 }
 
 //Follower Node
 else {
-  /*n_listen.connect(rainbow_bridge,host,() => console.log("Follower connecting to http://"+host+":"+rainbow_bridge))
+  //node client
+  n_io_client = socket_client.connect("http://"+host+":"+rainbow_bridge,{reconnect:true});
+  n_io_client.emit('new node has joined');
+  console.log("new node has joined");
   
-  node_client.on("connection",function(){
-    node_client.emit('new node has joined');
-    console.log("new node has joined");
-    node_client.on("server_to_server", function(msg){
-      console.log("server to server babyyyyyyyy")
-    });
-    node_client.on("heiarchy", function(msg){
-      console.log("delegations")
-    });
-  })
-  */
- 
+  n_io_client.on("connect",function(){
+  }); 
+
+  n_io_client.on("server_to_server", function(msg){
+    console.log("server to server babyyyyyyyy")
+  });
 }
 
 function check_data(){
