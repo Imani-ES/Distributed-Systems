@@ -2,33 +2,32 @@
 //https://app.diagrams.net/#G1D0nWAEBz9R4ezVkePmG-yefGfC8cGWi9
 
 //Environment Variables set up by Docker compose
-const port  = process.env.Port;
-const uri = process.env.DB_connect.toString();
-const database_name = process.env.db_name.toString();
-const app_name = process.env.app_name.toString();
-var chat_counter = 0;
-const host = process.env.host
-//onst lead = process.env.lead
-const rainbow_bridge = process.env.rainbow_bridge
+  const port  = process.env.Port;
+  const uri = process.env.DB_connect.toString();
+  const database_name = process.env.db_name.toString();
+  const app_name = process.env.app_name.toString();
+  var chat_counter = 0;
+  const host = process.env.host
+  const rainbow_bridge = process.env.rainbow_bridge
 
 //Middleware
-const express = require("express");
-const socketIO = require("socket.io")
-const socket_client = require("socket.io-client");
-var assert = require('assert');
-const http = require("http")
-const app = express();
-const MongoClient = require('mongodb').MongoClient;
+  const express = require("express");
+  const socketIO = require("socket.io")
+  var assert = require('assert');
+  const http = require("http")
+  const app = express();
+  const MongoClient = require('mongodb').MongoClient;
 
-//client
-const c_server = http.createServer(app);
-const c_io = socketIO(c_server);
+//leader -> client
+  const c_server = http.createServer(app);
+  const c_io = socketIO(c_server);
 
-//node
-const n_io_client = socket_client.connect("http://"+host+":"+rainbow_bridge,{reconnect:true});
+//leader -> node
+  const n_server =  http.createServer(app); 
+  const n_io = socketIO(n_server);
 
-const n_server =  http.createServer(app); 
-const n_io_server = socketIO(http);
+//node -> leader
+  const n_io_c = require("socket.io-client");;
 
 //Create Database
 MongoClient.connect(uri, function(err, db) {
@@ -53,14 +52,14 @@ app.get("/phase_2", (req, res) => res.sendFile(__dirname + "/index.html"));
 //Leader Node
 if(host == app_name){
   //node server
-  n_io_server.on("connection",function(socket){
+  n_io.on("connection",function(socket){
     //greetings
-    n_io_client.on("server_to_server", function(){
-      console.log("server to server babyyyyyyyy")
+    console.log("Server Client Connected")
+    n_io.emit('server_to_server',app_name);
+    socket.on("server_to_server", function(msg){
+      console.log("Welcome "+msg)
     });
-    n_io_server.emit('server_to_server');
-    console.log("new node has joined");
-    
+        
     //communicate while running
     socket.on("double_check_chat_response", function(msg){
       console.log(msg[0]+"proccessed: "+msg[1]);
@@ -79,6 +78,7 @@ if(host == app_name){
     //messages
     socket.on("chat", function(msg){
       //send to other nodes
+      console.log("Sending req to othe nodes");
       n_io_server.emit("double_check_chat",msg);
 
       //process chat
@@ -93,21 +93,26 @@ if(host == app_name){
 //Follower Node
 else {
   //node client
-  //n_io_client = socket_client.connect("http://"+host+":"+rainbow_bridge,{reconnect:true});
-  console.log("Following node: "+host);
-  n_io_client.emit('server_to_server');
-  console.log("new node has joined");
+  console.log("Attempting to connect to Leader @ "+"http://"+host+":"+rainbow_bridge);
+  n_io_client = n_io_c("http://"+host+":"+rainbow_bridge);
+  //n_io_client.connect("http://"+host+":"+rainbow_bridge);
+  
+  console.log(app_name + " following "+host);
+  n_io_client.emit('server_to_server',app_name);
   
   n_io_client.on("double_check_chat",function(msg){
     //process chat
+    console.log("Recieved Double check prompt");
     var ret = process_message(msg);
 
     n_io_client.emit('double_check_chat_response',[app_name,ret]);
   }); 
 
-  n_io_client.on("server_to_server", function(){
-    console.log("server to server babyyyyyyyy")
+  n_io_client.on("server_to_server", function(msg){
+    console.log("server to server baby, Hi "+msg)
   });
+  
+  
 }
 
 function check_data(){
