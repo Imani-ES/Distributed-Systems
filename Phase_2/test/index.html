@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>486_Project</title>
+    <link rel="stylesheet" type ="text/css" href="phase_1.css">
+    </head>
+
+    <body>
+        <h1>Phase 2: Multiple Nodes</h1>
+        <h1>App _2</h1>
+        <div class=chat>
+            <div class="chat_booth" >
+                <pid id = "chat_history"> </pid>
+            </div>
+
+            <div class="chat_box">
+                <input type = "text" id="input_chat" name="input_chat" placeholder="Post an Anonymous Quote!" >
+                <button id="send_chat" onclick = "send_chat()" class="btn btn-primary btn-md"> Send! </button> 
+            </div>
+        </div>
+
+        <script src="/socket.io/socket.io.js"></script>
+
+        <script>      
+            //document elements
+            var chat = document.getElementById("input_chat");
+            var chat_history = document.getElementById('chat_history');
+
+            //establish socket.io connection
+            const socket = io();
+
+            //send chat functionality
+            function send_chat(){
+                chat = document.getElementById("input_chat").value;
+                console.log("chat:"+ chat );
+                if(chat != ''){
+                    socket.emit("chat",chat);
+                    console.log('Sending Message');
+                }
+                document.getElementById("input_chat").value = '';
+            }
+            
+            //update chat history
+            socket.on("chat_history", function(msg){
+                msg = JSON.parse(msg, reviver);
+                console.log("Chat history: "+msg);
+                chat_history.innerHTML = '';
+                for(chat in msg){
+                chat_history.innerHTML += msg[chat] +'<br>';
+                }
+            });
+
+            socket.on("greeting", function(msg){
+                console.log(msg);
+            })
+
+            //JSON wrapper & unwrapper functions
+            function replacer(key, value) {
+                if(value instanceof Map) {
+                    return {
+                    dataType: 'Map',
+                    value: Array.from(value.entries()), // or with spread: value: [...value]
+                    };
+                } 
+                else {
+                    return value;
+                }
+            }
+            function reviver(key, value) {
+                if(typeof value === 'object' && value !== null) {
+                    if (value.dataType === 'Map') {
+                        return new Map(value.value);
+                    }
+                }
+                return value;
+            }
+        </script>
+    </body>
+</html>

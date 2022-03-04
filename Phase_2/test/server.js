@@ -79,7 +79,7 @@ if(host == app_name){
     socket.on("chat", function(msg){
       //send to other nodes
       console.log("Sending req to othe nodes");
-      n_io.emit("double_check_chat",msg);
+      n_io_server.emit("double_check_chat",msg);
 
       //process chat
       var ret = process_message(msg);

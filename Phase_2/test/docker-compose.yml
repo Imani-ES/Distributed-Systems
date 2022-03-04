@@ -5,7 +5,7 @@ services:
     image: getting-started
     container_name: Node_1
     networks:
-        #- node_1
+        - node_1
         - rainbow_bridge
     build: 
       context: .
@@ -28,7 +28,7 @@ services:
     image: getting-started
     container_name: Node_2
     networks:
-        #- node_2
+        - node_2
         - rainbow_bridge
     build: 
       context: .
@@ -54,8 +54,7 @@ services:
       container_name: mongodb_1
       restart: unless-stopped
       networks:
-        #- node_1
-        - rainbow_bridge
+        - node_1
       environment:
         MONGO_INITDB_DATABASE: test
         MONGO_INITDB_ROOT_USERNAME: root
@@ -70,8 +69,7 @@ services:
       container_name: mongodb_2
       restart: unless-stopped
       networks:
-        #- node_2
-        - rainbow_bridge
+        - node_2
       environment:
         MONGO_INITDB_DATABASE: test
         MONGO_INITDB_ROOT_USERNAME: root
