@@ -18,11 +18,11 @@ services:
       - rainbow_bridge=8080
       - DB_connect=mongodb://root:rootpwd@mongodb_1:27017
     depends_on:
-      mongo:  
+      mongodb_1:  
         condition:  service_started 
-      mongo_2:  
+      mongodb_2:  
         condition:  service_started
-      mongo_3:  
+      mongodb_3:  
         condition:  service_started
    
   node_2:

@@ -45,7 +45,7 @@ MongoClient.connect(uri, function(err, db) {
  chat_counter += 1;
 });
 
-//Create Database
+//Database
 MongoClient.connect(uri_2, function(err, db) {
   if (err) throw err;
   console.log("Mongo 2 Connected");
