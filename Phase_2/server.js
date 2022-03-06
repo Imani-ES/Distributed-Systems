@@ -21,53 +21,47 @@
 //leader -> client
   const c_server = http.createServer(app);
   const c_io = socketIO(c_server);
-
+ //Create Database
+ MongoClient.connect(uri, function(err, db) {
+    if (err) throw err;
+    console.log("Mongo Connected");
+    _db = db.db("test");
+    var chat_history = {id: chat_counter,chat_history:['Welcome all']};
+    _db.collection("chat_collection").insertOne(chat_history, function(err, res){
+      if (err) throw err;
+      console.log("Collection created!");
+      console.log("History element instantiated");
+    })
+   chat_counter += 1;
+  });
+  //global variables
+  chat_history = ['Welcome all'];
+  db = {}
+  app.use('/phase_1.css', express.static(__dirname + '/phase_1.css'));
+  app.get("/phase_2", (req, res) => res.sendFile(__dirname + "/index.html"));
+  
 //leader -> node
   const n_server =  http.createServer(app); 
   const n_io = socketIO(n_server);
 
 //node -> leader
-  const n_io_c = require("socket.io-client");;
+  const n_io_c = require("socket.io-client");
 
-//Create Database
-MongoClient.connect(uri, function(err, db) {
-  if (err) throw err;
-  console.log("Mongo Connected");
-  _db = db.db("test");
-  var chat_history = {id: chat_counter,chat_history:['Welcome all']};
-  _db.collection("chat_collection").insertOne(chat_history, function(err, res){
-    if (err) throw err;
-    console.log("Collection created!");
-    console.log("History element instantiated");
-  })
- chat_counter += 1;
-});
-
-//global variables
-chat_history = ['Welcome all'];
-db = {}
-app.use('/phase_1.css', express.static(__dirname + '/phase_1.css'));
-app.get("/phase_2", (req, res) => res.sendFile(__dirname + "/index.html"));
-
-//Leader Node
-if(host == app_name){
-  //node server
+if(host == app_name){//Leader Node functionality
   n_io.on("connection",function(socket){
     //greetings
     console.log("Server Client Connected")
     n_io.emit('server_to_server',app_name);
+    //server 2 server message handling
     socket.on("server_to_server", function(msg){
       console.log("Welcome "+msg)
     });
-        
-    //communicate while running
     socket.on("double_check_chat_response", function(msg){
       console.log(msg[0]+"proccessed: "+msg[1]);
     });
 
   });
   n_server.listen(rainbow_bridge,host,() => console.log("Leader listening on http://"+host+":"+rainbow_bridge));
-
   //web client
   c_io.on("connection", function(socket) {  
     //initial connection
@@ -90,16 +84,11 @@ if(host == app_name){
   });
   c_server.listen(port, () => console.log("listening on http://localhost:"+port));
   }
-//Follower Node
-else {
-  //node client
+else {//Follower Node functionality
   console.log("Attempting to connect to Leader @ "+"http://"+host+":"+rainbow_bridge);
   n_io_client = n_io_c("http://"+host+":"+rainbow_bridge);
-  //n_io_client.connect("http://"+host+":"+rainbow_bridge);
-  
-  console.log(app_name + " following "+host);
   n_io_client.emit('server_to_server',app_name);
-  
+  //server 2 server message handling
   n_io_client.on("double_check_chat",function(msg){
     //process chat
     console.log("Recieved Double check prompt");
@@ -107,20 +96,11 @@ else {
 
     n_io_client.emit('double_check_chat_response',[app_name,ret]);
   }); 
-
   n_io_client.on("server_to_server", function(msg){
     console.log("server to server baby, Hi "+msg)
-  });
-  
-  
+  });  
 }
-
-function check_data(){
-  //Check database's chathistory and make sure we're updated
-  
-}
-
-//all nodes do this
+//all nodes do below functions
 function process_message(msg){
   console.log("Processing chat: " + msg);
   chat_history.push(msg);
@@ -139,7 +119,6 @@ function process_message(msg){
   });
   return chat_history;
 }
-//JSON wrapper & unwrapper functions
 function replacer(key, value) {
   if(value instanceof Map) {
     return {
