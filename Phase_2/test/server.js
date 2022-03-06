@@ -3,11 +3,11 @@
 
 //Environment Variables set up by Docker compose
   const Client_Port  = process.env.Client_Port;
-  const uri = process.env.DB_connect.toString();
-  const uri_2 = process.env.DB_connect_2.toString();
-  const uri_3 = process.env.DB_connect_3.toString();
-  const database_name = process.env.db_name.toString();
-  const app_name = process.env.app_name.toString();
+  const uri = process.env.DB_connect;
+  const uri_2 = process.env.DB_connect_2;
+  const uri_3 = process.env.DB_connect_3;
+  const database_name = process.env.db_name;
+  const app_name = process.env.app_name;
   var chat_counter = 0;
   const host = process.env.host
   const Node_Port = process.env.Node_Port;
@@ -34,7 +34,7 @@
 //Database 1
 MongoClient.connect(uri, function(err, db) {
   if (err) throw err;
-  console.log("Mongo Connected");
+  console.log("Mongo Connected through" + uri);
   _db = db.db("test");
   var chat_history = {id: chat_counter,chat_history:['Welcome all']};
   _db.collection("chat_collection").insertOne(chat_history, function(err, res){
@@ -48,7 +48,7 @@ MongoClient.connect(uri, function(err, db) {
 //Database
 MongoClient.connect(uri_2, function(err, db) {
   if (err) throw err;
-  console.log("Mongo 2 Connected");
+  console.log("Mongo 2 Connected through"+uri_2);
   _db = db.db("test");
   var chat_history = {id: chat_counter,chat_history:['Welcome all']};
   _db.collection("chat_collection").insertOne(chat_history, function(err, res){
@@ -62,7 +62,7 @@ MongoClient.connect(uri_2, function(err, db) {
 //Create Database
 MongoClient.connect(uri_3, function(err, db) {
   if (err) throw err;
-  console.log("Mongo 3 Connected");
+  console.log("Mongo 3 Connected through"+uri_3);
   _db = db.db("test");
   var chat_history = {id: chat_counter,chat_history:['Welcome all']};
   _db.collection("chat_collection").insertOne(chat_history, function(err, res){

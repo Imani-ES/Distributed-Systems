@@ -3,9 +3,8 @@ services:
   
   node_1:
     image: getting-started
-    container_name: Node_1
+    container_name: Node_1_t
     networks:
-        - node_1
         - rainbow_bridge
     build: 
       context: .
@@ -15,50 +14,28 @@ services:
     environment:
       - Port=3000
       - db_name=test
-      - app_name=Node_1
+      - app_name=Node_1_t
       #- lead=yes
-      - host=Node_1
+      - host=Node_1_t
       - rainbow_bridge=8080
-      - DB_connect=mongodb://root:rootpwd@mongodb_1:27017
+      - DB_connect=mongodb://root:rootpwd@mongodb_1t:27017
+      - DB_connect_2=mongodb://root:rootpwd@mongodb_2t:27017
+      - DB_connect_3=mongodb://root:rootpwd@mongodb_3t:27017
     depends_on:
-      mongodb_1:  
+      mongodb_1t:  
         condition:  service_started
-      mongodb_2:
+      mongodb_2t:
         condition:  service_started
-      mongodb_3:
-        condition:  service_started
-  
-  node_2:
-    image: getting-started
-    container_name: Node_2
-    networks:
-        - node_2
-        - rainbow_bridge
-    build: 
-      context: .
-    ports:
-      - '5050:5050'
-    environment:
-      - Port=3000
-      - db_name=test
-      - app_name=Node_2
-      #- lead=no
-      - host=Node_1
-      - rainbow_bridge=8080
-      - DB_connect=mongodb://root:rootpwd@mongodb_2:27017
-      - node1:http://node_1:3000
-    depends_on:
-      node_1:
-        condition:  service_started
-      mongo_2:  
+      mongodb_3t:
         condition:  service_started
 
-  mongo:
+
+  mongodb_1t:
       image: mongo
-      container_name: mongodb_1
+      container_name: mongodb_1t
       restart: unless-stopped
       networks:
-        - node_1
+        - rainbow_bridge
       environment:
         MONGO_INITDB_DATABASE: test
         MONGO_INITDB_ROOT_USERNAME: root
@@ -69,11 +46,12 @@ services:
         - '27017:27017'
   
   mongo_2:
-      image: mongo
-      container_name: mongodb_2
+      image: mongo:latest
+      #command: mongod --port: 27027
+      container_name: mongodb_2t
       restart: unless-stopped
       networks:
-        - node_2
+        - rainbow_bridge
       environment:
         MONGO_INITDB_DATABASE: test
         MONGO_INITDB_ROOT_USERNAME: root
@@ -84,11 +62,12 @@ services:
         - '27027:27017'
 
   mongo_3:
-      image: mongo
-      container_name: mongodb_3
+      image: mongo:latest
+      #command: mongod --port: 27037
+      container_name: mongodb_3t
       restart: unless-stopped
       networks:
-        - node_2
+        - rainbow_bridge
       environment:
         MONGO_INITDB_DATABASE: test
         MONGO_INITDB_ROOT_USERNAME: root
@@ -101,14 +80,4 @@ networks:
 #rainbow bridge is the network between nodes
     rainbow_bridge:
       name: rainbow_bridge
-      driver: bridge
-#node networks are the networks between database and apps
-    node_1:
-      name: node_1
-      driver: bridge
-    node_2:
-      name: node_2
-      driver: bridge
-    node_3:
-      name: node_3
       driver: bridge

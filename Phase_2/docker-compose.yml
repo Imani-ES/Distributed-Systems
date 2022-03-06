@@ -40,7 +40,7 @@ services:
       - app_name=Node_2
       - host=Node_1
       - rainbow_bridge=8080
-      - DB_connect=mongodb://root_2:rootpwd_2@mongodb_2:27027
+      - DB_connect=mongodb://root_2:rootpwd_2@mongodb_2:27017
       - node1:http://node_1:3000
     depends_on:
       node_1:
@@ -61,7 +61,7 @@ services:
       - app_name=Node_3
       - host=Node_1
       - rainbow_bridge=8080
-      - DB_connect=mongodb://root_3:rootpwd_3@mongodb_3:27037
+      - DB_connect=mongodb://root_3:rootpwd_3@mongodb_3:27017
       - node1:http://node_1:3000
     depends_on:
       node_1:
