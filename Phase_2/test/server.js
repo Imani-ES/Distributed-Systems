@@ -2,13 +2,15 @@
 //https://app.diagrams.net/#G1D0nWAEBz9R4ezVkePmG-yefGfC8cGWi9
 
 //Environment Variables set up by Docker compose
-  const port  = process.env.Port;
+  const Client_Port  = process.env.Client_Port;
   const uri = process.env.DB_connect.toString();
+  const uri_2 = process.env.DB_connect_2.toString();
+  const uri_3 = process.env.DB_connect_3.toString();
   const database_name = process.env.db_name.toString();
   const app_name = process.env.app_name.toString();
   var chat_counter = 0;
   const host = process.env.host
-  const rainbow_bridge = process.env.rainbow_bridge
+  const Node_Port = process.env.Node_Port;
 
 //Middleware
   const express = require("express");
@@ -29,10 +31,38 @@
 //node -> leader
   const n_io_c = require("socket.io-client");;
 
-//Create Database
+//Database 1
 MongoClient.connect(uri, function(err, db) {
   if (err) throw err;
   console.log("Mongo Connected");
+  _db = db.db("test");
+  var chat_history = {id: chat_counter,chat_history:['Welcome all']};
+  _db.collection("chat_collection").insertOne(chat_history, function(err, res){
+    if (err) throw err;
+    console.log("Collection created!");
+    console.log("History element instantiated");
+  })
+ chat_counter += 1;
+});
+
+//Create Database
+MongoClient.connect(uri_2, function(err, db) {
+  if (err) throw err;
+  console.log("Mongo 2 Connected");
+  _db = db.db("test");
+  var chat_history = {id: chat_counter,chat_history:['Welcome all']};
+  _db.collection("chat_collection").insertOne(chat_history, function(err, res){
+    if (err) throw err;
+    console.log("Collection created!");
+    console.log("History element instantiated");
+  })
+ chat_counter += 1;
+});
+
+//Create Database
+MongoClient.connect(uri_3, function(err, db) {
+  if (err) throw err;
+  console.log("Mongo 3 Connected");
   _db = db.db("test");
   var chat_history = {id: chat_counter,chat_history:['Welcome all']};
   _db.collection("chat_collection").insertOne(chat_history, function(err, res){
@@ -66,7 +96,7 @@ if(host == app_name){
     });
 
   });
-  n_server.listen(rainbow_bridge,host,() => console.log("Leader listening on http://"+host+":"+rainbow_bridge));
+  n_server.listen(Node_Port,host,() => console.log("Leader listening on http://"+host+":"+Node_Port));
 
   //web client
   c_io.on("connection", function(socket) {  
@@ -88,13 +118,13 @@ if(host == app_name){
       c_io.emit('chat_history', JSON.stringify(ret,replacer));
       });
   });
-  c_server.listen(port, () => console.log("listening on http://localhost:"+port));
+  c_server.listen(Client_Port, () => console.log("listening on http://localhost:"+Client_Port));
   }
 //Follower Node
 else {
   //node client
-  console.log("Attempting to connect to Leader @ "+"http://"+host+":"+rainbow_bridge);
-  n_io_client = n_io_c("http://"+host+":"+rainbow_bridge);
+  console.log("Attempting to connect to Leader @ "+"http://"+host+":"+Node_Port);
+  n_io_client = n_io_c("http://"+host+":"+Node_Port);
   //n_io_client.connect("http://"+host+":"+rainbow_bridge);
   
   console.log(app_name + " following "+host);
