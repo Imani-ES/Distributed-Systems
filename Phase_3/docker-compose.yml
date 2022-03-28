@@ -1,0 +1,119 @@
+version: '3.3'
+services:
+  node_1:
+    image: getting-started
+    container_name: Node_1
+    networks:
+        - rainbow_bridge
+    build: 
+      context: .
+    ports:
+      - '3000:3000'
+      - '8080:8080'
+    environment:
+      - Port=3000
+      - db_name=test
+      - app_name=Node_1
+      - host=Node_1
+      - rainbow_bridge=8080
+      - DB_connect=mongodb://root:rootpwd@mongodb_1:27017
+    depends_on:
+      mongodb_1:  
+        condition:  service_started 
+      mongodb_2:  
+        condition:  service_started
+      mongodb_3:  
+        condition:  service_started
+   
+  node_2:
+    image: getting-started
+    container_name: Node_2
+    networks:
+        - rainbow_bridge
+    build: 
+      context: .
+    ports:
+      - '5050:5050'
+    environment:
+      - Port=3000
+      - db_name=test
+      - app_name=Node_2
+      - host=Node_1
+      - rainbow_bridge=8080
+      - DB_connect=mongodb://root_2:rootpwd_2@mongodb_2:27017
+      - node1:http://node_1:3000
+    depends_on:
+      node_1:
+        condition:  service_started
+
+  node_3:
+    image: getting-started
+    container_name: Node_3
+    networks:
+        - rainbow_bridge
+    build: 
+      context: .
+    ports:
+      - '5060:5060'
+    environment:
+      - Port=3000
+      - db_name=test
+      - app_name=Node_3
+      - host=Node_1
+      - rainbow_bridge=8080
+      - DB_connect=mongodb://root_3:rootpwd_3@mongodb_3:27017
+      - node1:http://node_1:3000
+    depends_on:
+      node_1:
+        condition:  service_started
+
+  mongo_1:
+      image: mongo
+      container_name: mongodb_1
+      restart: unless-stopped
+      networks:
+        - rainbow_bridge
+      environment:
+        MONGO_INITDB_DATABASE: test
+        MONGO_INITDB_ROOT_USERNAME: root
+        MONGO_INITDB_ROOT_PASSWORD: rootpwd
+      volumes:
+        - /data/mongo_1
+      ports:
+        - '27017:27017'
+  
+  mongo_2:
+      image: mongo
+      container_name: mongodb_2
+      restart: unless-stopped
+      networks:
+        - rainbow_bridge
+      environment:
+        MONGO_INITDB_DATABASE: test
+        MONGO_INITDB_ROOT_USERNAME: root_2
+        MONGO_INITDB_ROOT_PASSWORD: rootpwd_2
+      volumes:
+        - /data/mongo_2
+      ports:
+        - '27027:27017'
+  
+  mongo_3:
+      image: mongo
+      container_name: mongodb_3
+      restart: unless-stopped
+      networks:
+        - rainbow_bridge
+      environment:
+        MONGO_INITDB_DATABASE: test
+        MONGO_INITDB_ROOT_USERNAME: root_3
+        MONGO_INITDB_ROOT_PASSWORD: rootpwd_3
+      volumes:
+        - /data/mongo_3
+      ports:
+        - '27037:27017'
+
+networks:
+#rainbow bridge is the network between nodes
+    rainbow_bridge:
+      name: rainbow_bridge
+      driver: bridge
