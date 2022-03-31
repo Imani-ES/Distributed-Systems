@@ -1,7 +1,15 @@
 import time
 import socket
 import json
+import os
 
+# Get environment variables
+name = os.getenv('app_name')
+port = os.getenv('Port')
+uri = os.getenv('DB_connect')
+db_name = os.getenv('db_name')
+host = os.getenv('host')
+network = os.getenv('rainbow_bridge')
 
 def create_msg(counter):
     msg = {"msg": f"Hi, I am Node", "counter":counter}

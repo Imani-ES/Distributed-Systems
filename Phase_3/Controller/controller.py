@@ -2,6 +2,12 @@ import json
 import socket
 import traceback
 import time
+import os
+
+# Get environment variables
+name = os.getenv('app_name')
+port = os.getenv('Port')
+network = os.getenv('rainbow_bridge')
 
 # Wait following seconds below sending the controller request
 time.sleep(5)

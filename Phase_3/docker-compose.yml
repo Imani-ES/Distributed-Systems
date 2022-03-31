@@ -1,12 +1,34 @@
 version: '3.3'
 services:
+  controller:
+    image: getting-started
+    container_name: CNTRL
+    networks:
+      - rainbow_bridge
+    build: 
+      context:  ./controller
+    ports:
+      -'5070:5070'
+    environment:
+      - Port=3000
+      - db_name=test
+      - app_name=CNTRL
+      - host=None
+      - rainbow_bridge=8080
+    depends_on:
+      mongodb_1:  
+        condition:  service_started 
+      mongodb_2:  
+        condition:  service_started
+      mongodb_3:  
+        condition:  service_started
   node_1:
     image: getting-started
     container_name: Node_1
     networks:
         - rainbow_bridge
     build: 
-      context: .
+      context: ./Node
     ports:
       - '3000:3000'
       - '8080:8080'
@@ -14,15 +36,11 @@ services:
       - Port=3000
       - db_name=test
       - app_name=Node_1
-      - host=Node_1
+      - host=None
       - rainbow_bridge=8080
       - DB_connect=mongodb://root:rootpwd@mongodb_1:27017
     depends_on:
-      mongodb_1:  
-        condition:  service_started 
-      mongodb_2:  
-        condition:  service_started
-      mongodb_3:  
+      CNTRL:
         condition:  service_started
    
   node_2:
@@ -31,19 +49,19 @@ services:
     networks:
         - rainbow_bridge
     build: 
-      context: .
+      context: ./Node
     ports:
       - '5050:5050'
     environment:
       - Port=3000
       - db_name=test
       - app_name=Node_2
-      - host=Node_1
+      - host=None
       - rainbow_bridge=8080
       - DB_connect=mongodb://root_2:rootpwd_2@mongodb_2:27017
       - node1:http://node_1:3000
     depends_on:
-      node_1:
+      CNTRL:
         condition:  service_started
 
   node_3:
@@ -52,19 +70,19 @@ services:
     networks:
         - rainbow_bridge
     build: 
-      context: .
+      context: ./Node
     ports:
       - '5060:5060'
     environment:
       - Port=3000
       - db_name=test
       - app_name=Node_3
-      - host=Node_1
+      - host=None
       - rainbow_bridge=8080
       - DB_connect=mongodb://root_3:rootpwd_3@mongodb_3:27017
       - node1:http://node_1:3000
     depends_on:
-      node_1:
+      CNTRL:
         condition:  service_started
 
   mongo_1:
