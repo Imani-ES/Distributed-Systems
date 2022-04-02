@@ -10,32 +10,53 @@ uri = os.getenv('DB_connect')
 db_name = os.getenv('db_name')
 host = os.getenv('host')
 network = os.getenv('rainbow_bridge')
+lead = 0
 
-def create_msg(counter):
+#for followers to nominate them selves
+def msg_nominate(sender):
     msg = {"msg": f"Hi, I am Node", "counter":counter}
     msg_bytes = json.dumps(msg).encode()
     return msg_bytes
 
+#for followers to vote on other nominations
+def msg_vote(sender,vote):
+    msg = {"sender":name,"purpose":"vote","vote": vote}
+    msg_bytes = json.dumps(msg).encode()
+    UDP_Socket.sendto(msg_bytes, (targets[i], port))
+    return 0
+
+#for leaders to send messages to followers
+def msg_heart_beat(counter):
+    msg = {"msg": f"Hi, I am Node", "counter":counter}
+    msg_bytes = json.dumps(msg).encode()
+    return msg_byte
+
+
+#set up leader functionality
+def lead():
+    print("Starting "+name+ " as leader")
+    #set up sockets and stuff
+    print(name+ " is now leading")
+    return 0
+
+#set up follower functionality
+def follow():
+    print("Starting "+name+ " as follower")
+    #set up sockets and stuff
+    print(name+ " is now following")
+    return 0
 
 if __name__ == "__main__":
-
-    print("Starting Node 1")
-    time.sleep(5)
-
-    sender = "Node1"
-    target = "Node2"
+    
+    targets = ["Node2","Node3","Node4","Node5"]
 
     # Creating Socket and binding it to the target container IP and port
     UDP_Socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 
     # Bind the node to sender ip and port
-    UDP_Socket.bind((sender, 5555))
+    UDP_Socket.bind((name, port))
+    
+    time.sleep(5)
 
-    # Sending 5 messages to Node 2
-    for i in range(5):
-        node1_msg_bytes = create_msg(i)
-        UDP_Socket.sendto(node1_msg_bytes, (target, 5555))
-        time.sleep(1)
-
-    print("All messages were sent")
-    print("Ending Node 1")
+    #nodes automatically follow at first
+    follow()
