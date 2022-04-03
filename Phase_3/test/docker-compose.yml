@@ -6,7 +6,7 @@ services:
     networks:
       - rainbow_bridge
     build: 
-      context:  ./controller
+      context:  ./Controller
     ports:
       - '8080:8080'
     environment:

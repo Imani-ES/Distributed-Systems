@@ -6,7 +6,7 @@ import os
 
 
 # Read Message Template
-msg = json.load(open("Message.json"))
+msg = json.load(open("message.json"))
 
 # Get environment variables
 name = os.getenv('app_name')
