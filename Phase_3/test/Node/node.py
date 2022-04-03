@@ -12,26 +12,6 @@ host = os.getenv('host')
 network = os.getenv('rainbow_bridge')
 lead = 0
 
-#for followers to nominate them selves
-def msg_nominate(sender):
-    msg = {"msg": f"Hi, I am Node", "counter":counter}
-    msg_bytes = json.dumps(msg).encode()
-    return msg_bytes
-
-#for followers to vote on other nominations
-def msg_vote(sender,vote):
-    msg = {"sender":name,"purpose":"vote","vote": vote}
-    msg_bytes = json.dumps(msg).encode()
-    UDP_Socket.sendto(msg_bytes, (targets[i], port))
-    return 0
-
-#for leaders to send messages to followers
-def msg_heart_beat(counter):
-    msg = {"msg": f"Hi, I am Node", "counter":counter}
-    msg_bytes = json.dumps(msg).encode()
-    return msg_byte
-
-
 #set up leader functionality
 def lead():
     print("Starting "+name+ " as leader")
@@ -47,8 +27,11 @@ def lead():
 #set up follower functionality
 def follow():
     print("Starting "+name+ " as follower")
-    #set up sockets and stuff
-    print(name+ " is now following")
+    
+    while True:
+        data, addr = sock.recvfrom(port)
+        print("received message: %s"%data)
+        
     return 0
 
 if __name__ == "__main__":

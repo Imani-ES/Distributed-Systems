@@ -1,0 +1,44 @@
+version: '3.3'
+services:
+  controller:
+    image: getting-started
+    container_name: CNTRL
+    networks:
+      - rainbow_bridge
+    build: 
+      context:  ./controller
+    ports:
+      - '8080:8080'
+    environment:
+      - Port=8080
+      - db_name=test
+      - app_name=CNTRL
+      - host=None
+      - rainbow_bridge=8080
+      
+  node_1:
+    image: getting-started
+    container_name: Node_1
+    networks:
+        - rainbow_bridge
+    build: 
+      context: ./Node
+    ports:
+      - '3000:3000'
+    environment:
+      - Port=3000
+      - db_name=test
+      - app_name=Node_1
+      - host=None
+      - rainbow_bridge=8080
+      - DB_connect=mongodb://root:rootpwd@mongodb_1:27017
+    depends_on:
+      CNTRL:
+        condition:  service_started
+   
+
+networks:
+#rainbow bridge is the network between nodes
+    rainbow_bridge:
+      name: rainbow_bridge
+      driver: bridge
