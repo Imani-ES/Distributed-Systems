@@ -2,20 +2,17 @@ import json
 import socket
 import traceback
 import time
-import os
 
+# Wait following seconds below sending the controller request
+time.sleep(5)
 
 # Read Message Template
-msg = json.load(open("message.json"))
-
-# Get environment variables
-name = os.getenv('app_name')
-port = os.getenv('Port')
-network = os.getenv('rainbow_bridge')
+msg = json.load(open("Message.json"))
 
 # Initialize
 sender = "Controller"
-target = "Node_1"
+target = "Node1"
+port = 5555
 
 # Request
 msg['sender_name'] = sender
@@ -25,9 +22,6 @@ print(f"Request Created : {msg}")
 # Socket Creation and Binding
 skt = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 skt.bind((sender, port))
-
-# Wait following seconds below sending the controller request
-time.sleep(5)
 
 # Send Message
 try:
