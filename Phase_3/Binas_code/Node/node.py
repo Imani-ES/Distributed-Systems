@@ -8,18 +8,18 @@ import os
 # Get environment variables
 name = os.getenv('app_name') 
 print(os.getenv('app_name'))
-port = int(os.getenv('Port')) 
-uri = os.getenv('DB_connect')
-db_name = os.getenv('db_name')
-host = os.getenv('host')
-network = int(os.getenv('rainbow_bridge'))
-lead = 0
+port = int(os.getenv('Port'))
+timeout = int(os.getenv('timeout'))
 
+#RAFT Variables
+state = 'f' #can be either: f = follow; l = lead; c = candadite; d = dead
+leaderexists = 0
+log = {}
 
 #set up leader functionality
 def lead(socket):
     print("Starting "+name+ " as leader")
-    lead = 1
+    state = 'l'
     #set up sockets and stuff
     while True:
         #lead
@@ -29,24 +29,47 @@ def lead(socket):
 #set up follower functionality
 def follow(socket):
     print("Starting "+name+ " as follower")
+
+    #countdown for follower state
+    print("Starting countdown thread")    
+    t = timeout
+    while t > 0:
+        #kep reseting countdown when leader exists
+        if leaderexists:
+            t = timeout
+
+        #if leader stops existing, end countdown
+        else:
+            t = 0
+        t -= 1
+        time.sleep(1)
     
-    #while True:
-    #    data, addr = socket.recvfrom(port)
-    #    print("received message: %s"%data)
+    #switch to candidate state
+    state = 'c'
+    
     return 0
+
 
 #handles all messages
 def message_handle(msg,addr):
-    #Deco
+    #Decodemessage
     dm = json.loads(msg.decode('utf-8'))
     print(f"{name} Received the following message:{addr} => {dm}")
-    
-    if lead:
+    response = 0
+    #message processing
+    if state == 'l':
         print(f"{name} responding in a leader fashion")
-    else:
+
+    elif state == 'c':
+        print(f"{name} responding in a candidate fashion")
+
+    elif state == 'f':
         print(f"{name} responding in a follower fashion")
 
-    return 0
+    else:
+        print(f"{name} responding in a dead node fashion")
+
+    return response
 
 
 if __name__ == "__main__":
