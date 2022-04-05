@@ -24,10 +24,10 @@ skt = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 skt.bind((sender, port))
 
 # Send Message
-try:
+#try:
     # Encoding and sending the message
-    skt.sendto(json.dumps(msg).encode('utf-8'), (target, port))
-except:
+#    skt.sendto(json.dumps(msg).encode('utf-8'), (target, port))
+#except:
     #  socket.gaierror: [Errno -3] would be thrown if target IP container does not exist or exits, write your listener
-    print(f"ERROR WHILE SENDING REQUEST ACROSS : {traceback.format_exc()}")
+#    print(f"ERROR WHILE SENDING REQUEST ACROSS : {traceback.format_exc()}")
 

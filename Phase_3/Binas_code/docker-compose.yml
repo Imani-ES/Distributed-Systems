@@ -10,37 +10,51 @@ services:
       container_name: Node1
       build: Node/.
       environment:
-        - Port=3000
-        - db_name=test
-        - app_name=Node_1
-        - host=None
-        - rainbow_bridge=8080
-        - DB_connect=mongodb://root:rootpwd@mongodb_1:27017
+        - Port=5555
+        - app_name=Node1
       depends_on:
-        CNTRL:
+        controller:
           condition:  service_started
 
     node2:
       container_name: Node2
       build: Node/.
       environment:
-        - Port=3000
-        - db_name=test
-        - app_name=Node_1
-        - host=None
-        - rainbow_bridge=8080
-        - DB_connect=mongodb://root:rootpwd@mongodb_1:27017
+        - Port=5555
+        - app_name=Node2
+      depends_on:
+        controller:
+          condition:  service_started
 
     node3:
       container_name: Node3
       build: Node/.
       environment:
-        - Port=3000
-        - db_name=test
-        - app_name=Node_1
-        - host=None
-        - rainbow_bridge=8080
-        - DB_connect=mongodb://root:rootpwd@mongodb_1:27017
+        - Port=5555
+        - app_name=Node3
+      depends_on:
+        controller:
+          condition:  service_started
+
+    node4:
+      container_name: Node4
+      build: Node/.
+      environment:
+        - Port=5555
+        - app_name=Node4
+      depends_on:
+        controller:
+          condition:  service_started
+
+    node5:
+      container_name: Node5
+      build: Node/.
+      environment:
+        - Port=5555
+        - app_name=Node5
+      depends_on:
+        controller:
+          condition:  service_started
 
    #Do not change the part below
     controller:
