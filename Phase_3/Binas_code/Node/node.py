@@ -5,6 +5,7 @@ import json
 import traceback
 import os
 
+print("hello world from the nodes")
 # Get environment variables
 name = os.getenv('app_name') 
 print(os.getenv('app_name'))
@@ -17,38 +18,44 @@ leaderexists = 0
 log = {}
 
 #set up leader functionality
-def lead(socket):
-    print("Starting "+name+ " as leader")
-    state = 'l'
-    #set up sockets and stuff
-    while True:
-        #lead
-        data, addr = socket.recvfrom(port)
-        print("received message: %s"%data)
+def lead(socket) -> None:
+    #set gloal variables
+    global leaderexists, timeout, state, log, name, port
+
+    print(name+ " is now a leader")
+    
+
+#set up candidate dunctionality
+def candidate(socket) -> None:
+    #set gloal variables
+    global leaderexists, timeout, state, log, name, port
+
+    print(name+ " is now a candidate")
+
+    #send out vote stuff
 
 #set up follower functionality
-def follow(socket):
-    print("Starting "+name+ " as follower")
+def follow(socket) -> None:
+    #set gloal variables
+    global leaderexists, timeout, state, log, name, port    
+    t = timeout
+
+    print(name+ " is now a follower, Starting Countdown")
 
     #countdown for follower state
-    print("Starting countdown thread")    
-    t = timeout
     while t > 0:
-        #kep reseting countdown when leader exists
-        if leaderexists:
+        print(f"{t} secoonds left until rebellion")
+        if leaderexists: #keep reseting countdown when leader exists
             t = timeout
-
-        #if leader stops existing, end countdown
-        else:
-            t = 0
+            leaderexists = 0 #toggle leaderexists back
+        else: #if leader stops existing, end countdown
+            t = 0  
         t -= 1
-        time.sleep(1)
-    
+        time.sleep(1)    
     #switch to candidate state
     state = 'c'
-    
-    return 0
-
+    threading.Thread(target=candidate, args=[UDP_Socket]).start()
+    time.sleep(5) #let the candidate thread start
 
 #handles all messages
 def message_handle(msg,addr):
@@ -64,6 +71,7 @@ def message_handle(msg,addr):
         print(f"{name} responding in a candidate fashion")
 
     elif state == 'f':
+        leaderexists = 1 #signal heartbeat to follower
         print(f"{name} responding in a follower fashion")
 
     else:
@@ -75,6 +83,7 @@ def message_handle(msg,addr):
 if __name__ == "__main__":
     print(f"Starting "+ name)
 
+    time.sleep(10) #Give controller some time to start up
     sender = name
 
     # Creating Socket and binding it to the target container IP and port

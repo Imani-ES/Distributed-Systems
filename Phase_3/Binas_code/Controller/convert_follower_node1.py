@@ -24,7 +24,9 @@ skt = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 skt.bind((sender, port))
 
 while True:
-        
+    print("Welcome to HQ, enter Node first, then it's role")
+    Node_inp = input("Enter an Node")
+    Role_inp = input(f"Enter {Node_inp}'s new role")
     # Send Message
     try:
         # Encoding and sending the message
