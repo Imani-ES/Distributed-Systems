@@ -4,6 +4,7 @@ import threading
 import json
 import traceback
 import os
+from helper import *
 
 # Get environment variables
 name = os.getenv('app_name') 
@@ -20,6 +21,7 @@ termvotes=0
 
 # Read Message Templates
 msg = json.load(open("Message.json"))
+
 
 #set up leader functionality
 def lead(socket) -> None:
@@ -95,14 +97,7 @@ def message_handle(msg_in,addr,socket):
         response = "dead men give no updates"
     return response
 
-def send_message(msg,reciever,socket,port):
-    try:
-        # Encoding and sending the message
-        socket.sendto(json.dumps(msg).encode('utf-8'), (reciever, port))
-    except:
-        #  socket.gaierror: [Errno -3] would be thrown if target IP container does not exist or exits, write your listener
-        print(f"ERROR WHILE SENDING REQUEST ACROSS : {traceback.format_exc()}")
-    return 0
+
 
 if __name__ == "__main__":
     print(f"Starting "+ name)
