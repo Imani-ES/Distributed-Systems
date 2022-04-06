@@ -33,7 +33,7 @@ def candidate(socket) -> None:
     print(name+ " is now a candidate")
 
     #send out vote stuff
-
+    
 #set up follower functionality
 def follow(socket) -> None:
     #set gloal variables
@@ -50,15 +50,19 @@ def follow(socket) -> None:
             leaderexists = 0 #toggle leaderexists back
         else: #if leader stops existing, end countdown
             t = 0  
+            print("Beginning insurrection")
         t -= 1
         time.sleep(1)    
     #switch to candidate state
     state = 'c'
-    threading.Thread(target=candidate, args=[UDP_Socket]).start()
+    threading.Thread(target=candidate, args=[socket]).start()
     time.sleep(5) #let the candidate thread start
 
 #handles all messages
 def message_handle(msg,addr):
+    #set gloal variables
+    global leaderexists, timeout, state, log, name, port
+
     #Decodemessage
     dm = json.loads(msg.decode('utf-8'))
     print(f"{name} Received the following message:{addr} => {dm}")
