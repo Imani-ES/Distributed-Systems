@@ -5,7 +5,6 @@ import json
 import traceback
 import os
 
-print("hello world from the nodes")
 # Get environment variables
 name = os.getenv('app_name') 
 print(os.getenv('app_name'))
@@ -16,6 +15,11 @@ timeout = int(os.getenv('timeout'))
 state = 'f' #can be either: f = follow; l = lead; c = candadite; d = dead
 leaderexists = 0
 log = {}
+term = 0
+termvotes=0
+
+# Read Message Templates
+msg = json.load(open("Message.json"))
 
 #set up leader functionality
 def lead(socket) -> None:
@@ -28,12 +32,24 @@ def lead(socket) -> None:
 #set up candidate dunctionality
 def candidate(socket) -> None:
     #set gloal variables
-    global leaderexists, timeout, state, log, name, port
+    global leaderexists, timeout, state, log, name, port, term
 
     print(name+ " is now a candidate")
 
-    #send out vote stuff
+    # Build RequestVote RPC
+    msg['sender_name'] = name
+    msg['request'] = "VOTEME"
+    msg['term'] = term
+    msg['last_log'] = log
+    msg['log_length'] = log
+    print(f"{name} created Request Vote RPC: {msg}")
     
+    #send message
+    send_message(msg,"",socket,port)
+
+    time.sleep(10)
+
+
 #set up follower functionality
 def follow(socket) -> None:
     #set gloal variables
@@ -59,30 +75,34 @@ def follow(socket) -> None:
     time.sleep(5) #let the candidate thread start
 
 #handles all messages
-def message_handle(msg,addr):
+def message_handle(msg_in,addr,socket):
     #set gloal variables
-    global leaderexists, timeout, state, log, name, port
+    global leaderexists, timeout, state, log, name, port, term
 
     #Decodemessage
-    dm = json.loads(msg.decode('utf-8'))
-    print(f"{name} Received the following message:{addr} => {dm}")
+    dm = json.loads(msg_in.decode('utf-8'))
+    print(f"{name} Received the following message:{addr} => {dm}, responding as a {state}")
     response = 0
     #message processing
-    if state == 'l':
-        print(f"{name} responding in a leader fashion")
-
-    elif state == 'c':
-        print(f"{name} responding in a candidate fashion")
-
-    elif state == 'f':
-        leaderexists = 1 #signal heartbeat to follower
-        print(f"{name} responding in a follower fashion")
-
+    #respond to votes
+    if state != 'd':
+        if msg_in['request'] == "VOTEME":
+            if dm['term'] > term and dm['last_log']> len(log) and dm['log_length']>log[len(log)-1]['term']:
+                #vote yes
+                send_message(msg,dm["sender_name"],socket,port)
+        
     else:
-        print(f"{name} responding in a dead node fashion")
-
+        response = "dead men give no updates"
     return response
 
+def send_message(msg,reciever,socket,port):
+    try:
+        # Encoding and sending the message
+        socket.sendto(json.dumps(msg).encode('utf-8'), (reciever, port))
+    except:
+        #  socket.gaierror: [Errno -3] would be thrown if target IP container does not exist or exits, write your listener
+        print(f"ERROR WHILE SENDING REQUEST ACROSS : {traceback.format_exc()}")
+    return 0
 
 if __name__ == "__main__":
     print(f"Starting "+ name)
@@ -101,14 +121,15 @@ if __name__ == "__main__":
 
     #Main thread Listening at all times
     while True:
+        mesg = 0
         try:
-            msg, addr = UDP_Socket.recvfrom(1024)
+            mesg, addr = UDP_Socket.recvfrom(1024)
         except:
             print(f"ERROR while fetching from socket : {traceback.print_exc()}")
 
          #Messages are handled by creating threads
-        if msg:
-            threading.Thread(target=message_handle, args=[msg,addr]).start()
+        if mesg:
+            threading.Thread(target=message_handle, args=[mesg,addr,UDP_Socket]).start()
 
    
 
