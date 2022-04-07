@@ -65,6 +65,9 @@ services:
     controller:
       container_name: Controller
       build: Controller/.
+      environment:
+        - Port=5555
+        - app_name=Controller
       stdin_open: true
 
 

@@ -2,6 +2,6 @@
   "sender_name": null,
   "request": null,
   "term": null,
-  "key": null,
-  "value": null
+  "last_log":null,
+  "log_length":null
 }

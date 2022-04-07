@@ -37,19 +37,25 @@ def candidate(socket) -> None:
     global leaderexists, timeout, state, log, name, port, term
 
     print(name+ " is now a candidate")
-
+    msg_c = msg
     # Build RequestVote RPC
-    msg['sender_name'] = name
-    msg['request'] = "VOTEME"
-    msg['term'] = term
-    msg['last_log'] = log
-    msg['log_length'] = log
+    msg_c['sender_name'] = name
+    msg_c['request'] = "VOTEME"
+    msg_c['term'] = term
+    msg_c['last_log'] = log[len(log)-1]
+    msg_c['log_length'] = len(log)
     print(f"{name} created Request Vote RPC: {msg}")
-    
-    #send message
-    send_message(msg,"",socket,port)
 
+    #send message
+    send_message(msg_c,"",socket,port)
+
+    #wait some time for election
     time.sleep(10)
+    if state == 'f':
+        threading.Thread(target=follow, args=[socket]).start()
+    if state == 'l':
+        threading.Thread(target=lead, args=[socket]).start()
+    
 
 
 #set up follower functionality
@@ -77,26 +83,60 @@ def follow(socket) -> None:
     time.sleep(5) #let the candidate thread start
 
 #handles all messages
-def message_handle(msg_in,addr,socket):
+def message_handle(msg_in,addr,socket) -> None:
     #set gloal variables
-    global leaderexists, timeout, state, log, name, port, term
+    global leaderexists, timeout, state, log, name, port, term, termvotes
+    msg_c = msg
 
     #Decodemessage
     dm = json.loads(msg_in.decode('utf-8'))
     print(f"{name} Received the following message:{addr} => {dm}, responding as a {state}")
     response = 0
-    #message processing
-    #respond to votes
-    if state != 'd':
-        if msg_in['request'] == "VOTEME":
-            if dm['term'] > term and dm['last_log']> len(log) and dm['log_length']>log[len(log)-1]['term']:
-                #vote yes
-                send_message(msg,dm["sender_name"],socket,port)
-        
-    else:
-        response = "dead men give no updates"
-    return response
 
+    #respond to other nodes
+    if state != 'd':
+        #follower recieving a candidate's vote request 
+        if dm['request'] == "VOTEME":
+            if dm['term'] >= term and dm['last_log']>= len(log) and dm['log_length']>log[len(log)-1]['term']:
+                #vote yes
+                msg_c['sender_name'] = name
+                msg_c['request'] = "LEADME"
+                send_message(msg_c,dm["sender_name"],socket,port)
+            else:
+                #vote no
+                msg_c['sender_name'] = name
+                msg_c['request'] = "!LEADME"
+                send_message(msg_c,dm["sender_name"],socket,port)
+
+        #follower recieving a candidate's leader request 
+        elif dm['request'] == 'FOLLOWME':
+            if dm['term'] >= term and dm['last_log']>= len(log) and dm['log_length']>log[len(log)-1]['term']:
+                #Follow them, increase term, start follower thread
+                term += 1
+                leaderexists = 1
+                state = 'f'
+                termvotes = 0
+
+        #candidate recieving a follower vote respopnse     
+        elif dm['request'] == "LEADME":
+            print(f"{dm['sender_name']} voted for me!!")
+            termvotes += 1
+        #candidate recieving a follower vote respopnse  
+        elif dm['request'] == "!LEADME":
+            print(f"{dm['sender_name']} is a hater")
+            termvotes -= 1
+    
+    #node recieving command from controller
+    if(dm['sender_name'] == "Controller"):
+        
+    #update Controller
+    
+    msg_c['sender_name'] = name
+    msg_c['request'] = "STATUS"
+    msg_c['term'] = term
+    msg_c['last_log'] = log[len(log)-1]
+    msg_c['log_length'] = len(log)
+    print(f"{name} created Request Vote RPC: {msg}")
 
 
 if __name__ == "__main__":
