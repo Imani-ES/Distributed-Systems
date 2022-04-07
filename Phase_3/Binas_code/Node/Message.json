@@ -6,5 +6,5 @@
   "log_length":null,
   "role":null,
   "votes":0,
-  "controller_backing":0
+  "voted":0
 }

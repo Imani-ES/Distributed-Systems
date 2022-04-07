@@ -26,12 +26,12 @@ msg = json.load(open("Message.json"))
 #set up leader functionality
 def lead(socket) -> None:
     #set gloal variables
-    global leaderexists, timeout, state, log, name, port
+    global leaderexists, timeout, state, log, name, port, term, termvotes
 
     print(name+ " is now a leader")
     
 
-#set up candidate dunctionality
+#set up candidate functionality
 def candidate(socket) -> None:
     #set gloal variables
     global leaderexists, timeout, state, log, name, port, term, termvotes
@@ -73,7 +73,7 @@ def candidate(socket) -> None:
 #set up follower functionality
 def follow(socket) -> None:
     #set gloal variables
-    global leaderexists, timeout, state, log, name, port    
+    global leaderexists, timeout, state, log, name, port, term, termvotes, msg, voted 
     t = timeout
 
     print(name+ " is now a follower, Starting Countdown")
@@ -97,7 +97,7 @@ def follow(socket) -> None:
 #handles all messages
 def message_handle(msg_in,addr,socket) -> None:
     #set gloal variables
-    global leaderexists, timeout, state, log, name, port, term, termvotes, msg
+    global leaderexists, timeout, state, log, name, port, term, termvotes, msg, voted
     msg_c = msg
 
     #Decodemessage
@@ -111,44 +111,32 @@ def message_handle(msg_in,addr,socket) -> None:
         #turn node into a follower
         if Request == 'FOLLOW':
             #change state to follower
-            msg["controller_backing"] = 0
             state = 'f'
         
         #turn node into a candidate
         if Request == 'TRYLEAD':
-            msg["controller_backing"] = 1
             if state != 'l':
                 leaderexists = 0
         
         #have node play dead
         if Request == 'PLAYDEAD':
-            msg["controller_backing"] = 0
             state = 'd'
     
     #node recieving message from other node
     elif state != 'd':
         #follower recieving a candidate's vote request 
         if Request== "VOTEME":
-            if dm['controller_backing']:
-                 #vote yes
-                msg_c['request'] = "LEADME"
-            elif dm['term'] >= term and dm['last_log']>= len(log) and dm['log_length']>log[len(log)-1]['term']:
+            #if you havent voted yet, and the candadites logs are valid, give up your vote
+            if voted == 0 and dm['term'] >= term and dm['last_log']>= log[len(log)-1]['term'] and dm['log_length']>=len(log):
                 #vote yes
                 msg_c['request'] = "LEADME"
+                voted = 1
             else:
                 #vote no
                 msg_c['request'] = "!LEADME"
             #send out message
             msg_c['sender_name'] = name
             send_message(msg_c,dm["sender_name"],socket,port)
-
-        #follower recieving a candidate's leader request 
-        elif Request == 'FOLLOWME':
-            if dm['term'] >= term and dm['last_log']>= len(log) and dm['log_length']>log[len(log)-1]['term']:
-                #Follow them, increase term, start follower thread
-                leaderexists = 1
-                state = 'f'
-                termvotes = 0
 
         #candidate recieving a follower's vote respopnse     
         elif Request == "LEADME":
@@ -162,16 +150,19 @@ def message_handle(msg_in,addr,socket) -> None:
         
         #follower recieving a leader's heartbeat
         elif Request == "HEARTBEAT":
-            if state == 'f':
-                #verify heartbeat
-                if dm['term'] >= term and dm['log_length']>log[len(log)-1]['term']:
-                    leaderexists = 1
-                    term = dm['term']
-                    #if heartbeat has a log, add it to follower's log
-                    if dm['last_log']:
-                        log.add(dm['last_log'])
-                else:#invalid heartbeat, follower will become candidate
-                    leaderexists = 0
+            #verify heartbeat
+            if dm['term'] >= term and dm['log_length']>log[len(log)-1]['term']:
+                if state != 'f': #if node is a candidate or leader, but gets a valid Heartbeat,
+                    state ='f'               
+                    voted = 0
+                leaderexists = 1
+                term = dm['term']
+                termvotes = 0
+                #if heartbeat has a log, add it to follower's log
+                if dm['last_log']:
+                    log.add(dm['last_log'])
+            else:#invalid heartbeat, follower will become candidate
+                leaderexists = 0                
 
         #Candidates checking for new leader
         elif Request == "VOTECONCENSUS":
@@ -181,9 +172,13 @@ def message_handle(msg_in,addr,socket) -> None:
             if dm['controller_backing']:
                 state = 'f'
                 termvotes = 0
+        
+        #Bad Message
+        else:
+            print(f"Bad Message @{Request}")
     
     #node is dead
-    else
+    else:
         print("Do Not Disturb")
 
     #update Controller

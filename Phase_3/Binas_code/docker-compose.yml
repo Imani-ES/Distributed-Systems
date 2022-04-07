@@ -9,6 +9,8 @@ services:
     node1:
       container_name: Node1
       build: Node/.
+      ports:
+        -"5000:5555"
       environment:
         - Port=5555
         - app_name=Node1
@@ -20,6 +22,8 @@ services:
     node2:
       container_name: Node2
       build: Node/.
+      ports:
+        -"5500:5555"
       environment:
         - Port=5555
         - app_name=Node2
@@ -31,6 +35,8 @@ services:
     node3:
       container_name: Node3
       build: Node/.
+      ports:
+        -"5550:5555"
       environment:
         - Port=5555
         - app_name=Node3
@@ -42,6 +48,8 @@ services:
     node4:
       container_name: Node4
       build: Node/.
+      ports:
+        -"5005:5555"
       environment:
         - Port=5555
         - app_name=Node4
@@ -53,6 +61,8 @@ services:
     node5:
       container_name: Node5
       build: Node/.
+      ports:
+        -"5055:5555"
       environment:
         - Port=5555
         - app_name=Node5
