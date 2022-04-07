@@ -97,7 +97,7 @@ def follow(socket) -> None:
 #handles all messages
 def message_handle(msg_in,addr,socket) -> None:
     #set gloal variables
-    global leaderexists, timeout, state, log, name, port, term, termvotes
+    global leaderexists, timeout, state, log, name, port, term, termvotes, msg
     msg_c = msg
 
     #Decodemessage
@@ -105,9 +105,28 @@ def message_handle(msg_in,addr,socket) -> None:
     print(f"{name} Received the following message:{addr} => {dm}, responding as a {state}")
     response = 0
     Request = dm['request']
-
-    #respond to other nodes
-    if state != 'd':
+    
+    #node recieving command from controller
+    if(dm['sender_name'] == "Controller"):
+        #turn node into a follower
+        if Request == 'FOLLOW':
+            #change state to follower
+            msg["controller_backing"] = 0
+            state = 'f'
+        
+        #turn node into a candidate
+        if Request == 'TRYLEAD':
+            msg["controller_backing"] = 1
+            if state != 'l':
+                leaderexists = 0
+        
+        #have node play dead
+        if Request == 'PLAYDEAD':
+            msg["controller_backing"] = 0
+            state = 'd'
+    
+    #node recieving message from other node
+    elif state != 'd':
         #follower recieving a candidate's vote request 
         if Request== "VOTEME":
             if dm['controller_backing']:
@@ -162,24 +181,12 @@ def message_handle(msg_in,addr,socket) -> None:
             if dm['controller_backing']:
                 state = 'f'
                 termvotes = 0
-    #node recieving command from controller
-    if(dm['sender_name'] == "Controller"):
-        #turn node into a follower
-        if Request == 'FOLLOW':
-            #change state to follower
-            state = 'f'
-        
-        #turn node into a candidate
-        if Request == 'TRYLEAD':
-            if state != 'l':
-                leaderexists = 0
-        
-        #have node play dead
-        if Request == 'PLAYDEAD':
-            state = 'd'
     
+    #node is dead
+    else
+        print("Do Not Disturb")
+
     #update Controller
-    
     msg_c['sender_name'] = name
     msg_c['request'] = "STATUS"
     msg_c['term'] = term
