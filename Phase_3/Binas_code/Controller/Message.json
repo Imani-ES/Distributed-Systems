@@ -3,5 +3,6 @@
   "request": null,
   "term": null,
   "last_log":null,
-  "log_length":null
+  "log_length":null,
+  "role":null
 }

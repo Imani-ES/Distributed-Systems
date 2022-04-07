@@ -92,11 +92,12 @@ def message_handle(msg_in,addr,socket) -> None:
     dm = json.loads(msg_in.decode('utf-8'))
     print(f"{name} Received the following message:{addr} => {dm}, responding as a {state}")
     response = 0
+    Request = dm['request']
 
     #respond to other nodes
     if state != 'd':
         #follower recieving a candidate's vote request 
-        if dm['request'] == "VOTEME":
+        if Request== "VOTEME":
             if dm['term'] >= term and dm['last_log']>= len(log) and dm['log_length']>log[len(log)-1]['term']:
                 #vote yes
                 msg_c['sender_name'] = name
@@ -109,26 +110,52 @@ def message_handle(msg_in,addr,socket) -> None:
                 send_message(msg_c,dm["sender_name"],socket,port)
 
         #follower recieving a candidate's leader request 
-        elif dm['request'] == 'FOLLOWME':
+        elif Request == 'FOLLOWME':
             if dm['term'] >= term and dm['last_log']>= len(log) and dm['log_length']>log[len(log)-1]['term']:
                 #Follow them, increase term, start follower thread
-                term += 1
                 leaderexists = 1
                 state = 'f'
                 termvotes = 0
 
-        #candidate recieving a follower vote respopnse     
-        elif dm['request'] == "LEADME":
+        #candidate recieving a follower's vote respopnse     
+        elif Request == "LEADME":
             print(f"{dm['sender_name']} voted for me!!")
             termvotes += 1
-        #candidate recieving a follower vote respopnse  
-        elif dm['request'] == "!LEADME":
+        
+        #candidate recieving a follower's vote respopnse  
+        elif Request == "!LEADME":
             print(f"{dm['sender_name']} is a hater")
             termvotes -= 1
-    
+        
+        #follower recieving a leader's heartbeat
+        elif Request == "HEARTBEAT":
+            if state == 'f':
+                #verify heartbeat
+                if dm['term'] >= term and dm['log_length']>log[len(log)-1]['term']:
+                    leaderexists = 1
+                    term = dm['term']
+                    #if heartbeat has a log, add it to follower's log
+                    if dm['last_log']:
+                        log.add(dm['last_log'])
+                else:#invalid heartbeat, follower will become candidate
+                    leaderexists = 0
+
     #node recieving command from controller
     if(dm['sender_name'] == "Controller"):
+        #turn node into a follower
+        if Request == 'FOLLOW':
+            #change state to follower
+            state = 'f'
         
+        #turn node into a candidate
+        if Request == 'TRYLEAD':
+            if state != 'l':
+                leaderexists = 0
+        
+        #have node play dead
+        if Request == 'PLAYDEAD':
+            state = 'd'
+    
     #update Controller
     
     msg_c['sender_name'] = name
@@ -136,6 +163,7 @@ def message_handle(msg_in,addr,socket) -> None:
     msg_c['term'] = term
     msg_c['last_log'] = log[len(log)-1]
     msg_c['log_length'] = len(log)
+    msg_c['role'] = state
     print(f"{name} created Request Vote RPC: {msg}")
 
 
