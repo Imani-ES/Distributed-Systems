@@ -34,7 +34,7 @@ def lead(socket) -> None:
 #set up candidate dunctionality
 def candidate(socket) -> None:
     #set gloal variables
-    global leaderexists, timeout, state, log, name, port, term
+    global leaderexists, timeout, state, log, name, port, term, termvotes
 
     print(name+ " is now a candidate")
     msg_c = msg
@@ -49,11 +49,23 @@ def candidate(socket) -> None:
     #send message
     send_message(msg_c,"",socket,port)
 
-    #wait some time for election
+    #wait some time for votes to come in
     time.sleep(10)
+
+    #let other candidates know aboout votes
+    msg_c['request'] = "VOTECONCENSUS"
+    msg_c['votes'] = termvotes
+    send_message(msg_c,"",socket,port)
+
+    #wait some time for nodes to come to concensus
+    time.sleep(10)
+
     if state == 'f':
+        term += 1
         threading.Thread(target=follow, args=[socket]).start()
-    if state == 'l':
+    else:
+        #choose leader with the highest node #
+        term += 1
         threading.Thread(target=lead, args=[socket]).start()
     
 
@@ -98,16 +110,18 @@ def message_handle(msg_in,addr,socket) -> None:
     if state != 'd':
         #follower recieving a candidate's vote request 
         if Request== "VOTEME":
-            if dm['term'] >= term and dm['last_log']>= len(log) and dm['log_length']>log[len(log)-1]['term']:
-                #vote yes
-                msg_c['sender_name'] = name
+            if dm['controller_backing']:
+                 #vote yes
                 msg_c['request'] = "LEADME"
-                send_message(msg_c,dm["sender_name"],socket,port)
+            elif dm['term'] >= term and dm['last_log']>= len(log) and dm['log_length']>log[len(log)-1]['term']:
+                #vote yes
+                msg_c['request'] = "LEADME"
             else:
                 #vote no
-                msg_c['sender_name'] = name
                 msg_c['request'] = "!LEADME"
-                send_message(msg_c,dm["sender_name"],socket,port)
+            #send out message
+            msg_c['sender_name'] = name
+            send_message(msg_c,dm["sender_name"],socket,port)
 
         #follower recieving a candidate's leader request 
         elif Request == 'FOLLOWME':
@@ -140,6 +154,14 @@ def message_handle(msg_in,addr,socket) -> None:
                 else:#invalid heartbeat, follower will become candidate
                     leaderexists = 0
 
+        #Candidates checking for new leader
+        elif Request == "VOTECONCENSUS":
+            if dm['votes'] > termvotes:
+                state = 'f'
+                termvotes = 0
+            if dm['controller_backing']:
+                state = 'f'
+                termvotes = 0
     #node recieving command from controller
     if(dm['sender_name'] == "Controller"):
         #turn node into a follower
