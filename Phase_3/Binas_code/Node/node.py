@@ -10,9 +10,8 @@ import random
 
 # Get environment variables
 name = os.getenv('app_name') 
-print(os.getenv('app_name'))
 port = int(os.getenv('Port'))
-timeout = random.randint(2, 11)
+timeout = random.randint(10, 18)
 #RAFT Variables
 state = 'f' #can be either: f = follow; l = lead; c = candadite; d = dead
 leaderexists = 0
@@ -71,7 +70,7 @@ def candidate(socket) -> None:
     send_message(msg_c,"",socket,port)
 
     #wait some time for votes to come in
-    time.sleep(2)
+    time.sleep(5)
 
     #let other candidates know aboout votes
     print("Sending out concensus")
@@ -80,7 +79,10 @@ def candidate(socket) -> None:
     send_message(msg_c,"",socket,port)
 
     #wait some time for nodes to come to concensus
-    time.sleep(2)
+    while len(termcandidates) == 0:     
+        print("waiting for concensus")
+        time.sleep(.25)
+    time.sleep(5)
 
     #add up votes
     print("Deciding leader")
