@@ -20,4 +20,4 @@ def send_message(msg,reciever,socket,port):
 #leaderexists
 #term
 #termvotes
-#
+#termcandidates{}

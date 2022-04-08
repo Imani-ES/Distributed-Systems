@@ -1,9 +1,10 @@
+from email.mime import message
 import json
 import socket
 import traceback
 import time
 import os
-
+import threading
 # Read Message Template
 msg = json.load(open("Message.json"))
 
@@ -30,13 +31,8 @@ def listener(socket,port) -> None:
 def message_handle(mesg,addr,socket) -> None:
     
     #Decodemessage
-    dm = json.loads(msg_in.decode('utf-8'))
+    dm = json.loads(mesg.decode('utf-8'))
     print(f"{name} Received the following message:{addr} => {dm}, responding as a {state}")
-    response = 0
-
-    #message processing
-    if dm['request'] == "STATUS":
-       print(f"{dm["sender_name"]}: TERM:{dm["term"]}, last_log:{dm["last_log"]}, log_length:{dm[" log_length"]}")
     
 
 #start listening thread
@@ -46,7 +42,7 @@ threading.Thread(target=listener, args=[skt,port]).start()
 while True:
     print("Welcome to HQ, enter Node first, then it's role.")
     target= input("Enter an Node")
-    req = input(f"Enter {Node_inp}'s new role: either [FOLLOW],[RUNFOROFFICE], or [DIE]")
+    req = input(f"Enter {target}'s new role: either [FOLLOW],[RUNFOROFFICE], or [DIE]")
      
     #Build message
     msg['sender_name'] = name

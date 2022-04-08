@@ -10,9 +10,9 @@ services:
       container_name: Node1
       build: Node/.
       ports:
-        -"5000:5555"
+        - "5000:5555"
       environment:
-        - Port=5555
+        - Port=5000
         - app_name=Node1
         - timeout=5
       depends_on:
@@ -23,9 +23,9 @@ services:
       container_name: Node2
       build: Node/.
       ports:
-        -"5500:5555"
+        - "5500:5555"
       environment:
-        - Port=5555
+        - Port=5500
         - app_name=Node2
         - timeout=6
       depends_on:
@@ -36,9 +36,9 @@ services:
       container_name: Node3
       build: Node/.
       ports:
-        -"5550:5555"
+        - "5550:5555"
       environment:
-        - Port=5555
+        - Port=5550
         - app_name=Node3
         - timeout=7
       depends_on:
@@ -49,9 +49,9 @@ services:
       container_name: Node4
       build: Node/.
       ports:
-        -"5005:5555"
+        - "8080:5555"
       environment:
-        - Port=5555
+        - Port=8080
         - app_name=Node4
         - timeout=5
       depends_on:
@@ -62,9 +62,9 @@ services:
       container_name: Node5
       build: Node/.
       ports:
-        -"5055:5555"
+        - "5055:5555"
       environment:
-        - Port=5555
+        - Port=5055
         - app_name=Node5
         - timeout=6
       depends_on:
@@ -75,6 +75,8 @@ services:
     controller:
       container_name: Controller
       build: Controller/.
+      ports:
+        - "5555:5555"
       environment:
         - Port=5555
         - app_name=Controller
