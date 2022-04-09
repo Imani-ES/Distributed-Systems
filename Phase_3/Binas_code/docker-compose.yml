@@ -9,10 +9,8 @@ services:
     node1:
       container_name: Node1
       build: Node/.
-      ports:
-        - "5000:5555"
       environment:
-        - Port=5000
+        - Port=5555
         - app_name=Node1
         - group=224.1.1.1
       depends_on:
@@ -22,10 +20,8 @@ services:
     node2:
       container_name: Node2
       build: Node/.
-      ports:
-        - "5500:5555"
       environment:
-        - Port=5500
+        - Port=5555
         - app_name=Node2
         - group=224.1.1.1
       depends_on:
@@ -35,10 +31,8 @@ services:
     node3:
       container_name: Node3
       build: Node/.
-      ports:
-        - "5550:5555"
       environment:
-        - Port=5550
+        - Port=5555
         - app_name=Node3
         - group=224.1.1.1
       depends_on:
@@ -48,10 +42,8 @@ services:
     node4:
       container_name: Node4
       build: Node/.
-      ports:
-        - "8080:5555"
       environment:
-        - Port=8080
+        - Port=5555
         - app_name=Node4
         - group=224.1.1.1
       depends_on:
@@ -61,10 +53,8 @@ services:
     node5:
       container_name: Node5
       build: Node/.
-      ports:
-        - "5055:5555"
       environment:
-        - Port=5055
+        - Port=5555
         - app_name=Node5
         - group=224.1.1.1
       depends_on:
@@ -75,8 +65,6 @@ services:
     controller:
       container_name: Controller
       build: Controller/.
-      ports:
-        - "5555:5555"
       environment:
         - Port=5555
         - app_name=Controller
