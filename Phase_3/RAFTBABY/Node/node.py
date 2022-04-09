@@ -78,7 +78,6 @@ def candidate(socket) -> None:
         return
     
     #let other candidates know aboout votes
-    print("Sending out concensus")
     msg_c['sender_name'] = name
     msg_c['request'] = "VOTECONCENSUS"
     msg_c['recipient'] = 'E'
