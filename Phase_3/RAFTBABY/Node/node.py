@@ -67,13 +67,13 @@ def candidate(socket) -> None:
     msg_c['request'] = "VOTEME"
     msg_c['term'] = node_info['term']
     if len(node_info['log']) > 0:
-        msg_c['last_log'] = log[len(node_info['log'])-1]
+        msg_c['last_log'] = node_info['log'][len(node_info['log'])-1]
     msg_c['log_length'] = len(node_info['log'])
     send_message(msg_c,group,socket,port)
 
     #wait some time for votes to come in
     time.sleep(3*node_info['timeout'])
-     if node_info['state'] == 'f': # if recieved a valid heartbeat, switch to follow state
+    if node_info['state'] == 'f': # if recieved a valid heartbeat, switch to follow state
         threading.Thread(target=follow, args=[socket]).start()
         return
     
