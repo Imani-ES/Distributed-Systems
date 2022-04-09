@@ -76,7 +76,6 @@ def candidate(socket) -> None:
     time.sleep(5)
 
     #let other candidates know aboout votes
-    print("Sending out concensus")
     msg_c['sender_name'] = name
     msg_c['request'] = "VOTECONCENSUS"
     msg_c['recipient'] = 'E'
