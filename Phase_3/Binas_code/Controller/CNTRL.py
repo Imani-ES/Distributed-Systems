@@ -10,14 +10,15 @@ msg = json.load(open("Message.json"))
 
 # Initialize
 name = os.getenv('app_name') 
-print(os.getenv('app_name'))
 port = int(os.getenv('Port'))
+group = os.getenv('group')
 
-# Socket Creation and Binding
-skt = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-skt.bind((name, port))
+print("Building socket")
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+sock.setsockopt(socket.IPPROTO_IP,socket.IP_MULTICAST_TTL,2)
+time.sleep(2)
 
-def listener(socket,port) -> None:
+def listener(socket) -> None:
     while True:
         try:
             mesg, addr = socket.recvfrom(1024)
@@ -26,9 +27,9 @@ def listener(socket,port) -> None:
 
          #Messages are handled by creating threads
         if mesg:
-            threading.Thread(target=message_handle, args=[mesg,addr,socket]).start()
+            threading.Thread(target=message_handle, args=[mesg,addr]).start()
 
-def message_handle(mesg,addr,socket) -> None:
+def message_handle(mesg,addr) -> None:
     
     #Decodemessage
     dm = json.loads(mesg.decode('utf-8'))
@@ -36,7 +37,7 @@ def message_handle(mesg,addr,socket) -> None:
     
 
 #start listening thread
-threading.Thread(target=listener, args=[skt,port]).start()
+threading.Thread(target=listener, args=[sock]).start()
 
 #main thread taking commands
 while True:
@@ -53,7 +54,7 @@ while True:
     # Send Message
     try:
         # Encoding and sending the message
-        skt.sendto(json.dumps(msg).encode('utf-8'), (target, port))
+        sock.sendto(json.dumps(msg).encode('utf-8'), (group, port))
     except:
         #  socket.gaierror: [Errno -3] would be thrown if target IP container does not exist or exits, write your listener
         print(f"ERROR WHILE SENDING REQUEST ACROSS : {traceback.format_exc()}")

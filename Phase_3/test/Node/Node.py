@@ -1,58 +1,65 @@
-print("Hello World from Nodes")
-import time
+# print("Hello World from Nodes")
+# import time
+# import socket 
+# import traceback
+
+# # Get environment variables
+# name =  "Node_1"
+# port = 8080
+
+# print("Hello World, "+name+ " is here trying to bond to port "+str(port))
+
+# # Creating Socket and binding it to the target container IP and port
+# UDP_Socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+
+# # Bind the node to sender ip and port
+# UDP_Socket.bind((name, port))
+
+# time.sleep(5)
+# #Main thread Listening at all times
+# while True:
+#     mesg = 0
+#     try:
+#         mesg, addr = UDP_Socket.recvfrom(1024)
+#     except:
+#         print(f"ERROR while fetching from socket : {traceback.print_exc()}")
+
+#         #Messages are handled by creating threads
+#     if mesg:
+#         print(mesg)
+
+
 import socket
-import json
-import os
+import struct
+import time
+from tokenize import group
+import traceback
+import threading
+group = '224.1.1.1'
+port = 5004
 
-# Read Message Template
-msg = {
-    "sender_name": None,
-    "request": None,
-    "term": None,
-    "key": None,
-    "value": None
-  }
-  
-
-# Get environment variables
-name = os.getenv('app_name') or "Node_1"
-print(os.getenv('app_name'))
-port = int(os.getenv('Port')) #or 8080
-uri = os.getenv('DB_connect')
-db_name = os.getenv('db_name')
-host = os.getenv('host')
-network = int(os.getenv('rainbow_bridge')) or 8080
-lead = 0
-
-#set up leader functionality
-def lead(socket):
-    print("Starting "+name+ " as leader")
-    lead = 1
-    #set up sockets and stuff
+def sender(sock):
     while True:
-        #lead
-        data, addr = socket.recvfrom(port)
-        print("received message: %s"%data)
+        sock.sendto(b"Hello via Nodes", (group, port))
+        time.sleep(5)
 
-#set up follower functionality
-def follow(socket):
-    print("Starting "+name+ " as follower")
-    
-    #while True:
-    #    data, addr = socket.recvfrom(port)
-    #    print("received message: %s"%data)
-    return 0
+print("Building socket")
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+sock.bind(('', port))
+mreq = struct.pack("4sl", socket.inet_aton(group), socket.INADDR_ANY)
+sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+time.sleep(3)
+print("Listening ...")
+if __name__ == "__main__":
+    threading.Thread(target=sender, args=[sock]).start()
+    while True:
+        mesg = 0
+        try:
+            mesg, addr = sock.recvfrom(1024)
+        except:
+            print(f"ERROR while fetching from socket : {traceback.print_exc()}")
 
-print("Hello World, "+name+ " is here trying to bond to port "+str(port))
-
-
-# Creating Socket and binding it to the target container IP and port
-UDP_Socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-
-# Bind the node to sender ip and port
-UDP_Socket.bind((name, port))
-
-time.sleep(5)
-
-#nodes automatically follow at first
-follow(UDP_Socket)
+            #Messages are handled by creating threads
+        if mesg:
+            print(mesg)

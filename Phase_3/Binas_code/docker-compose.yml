@@ -14,7 +14,7 @@ services:
       environment:
         - Port=5000
         - app_name=Node1
-        - timeout=5
+        - group=224.1.1.1
       depends_on:
         controller:
           condition:  service_started
@@ -27,7 +27,7 @@ services:
       environment:
         - Port=5500
         - app_name=Node2
-        - timeout=6
+        - group=224.1.1.1
       depends_on:
         controller:
           condition:  service_started
@@ -40,7 +40,7 @@ services:
       environment:
         - Port=5550
         - app_name=Node3
-        - timeout=7
+        - group=224.1.1.1
       depends_on:
         controller:
           condition:  service_started
@@ -53,7 +53,7 @@ services:
       environment:
         - Port=8080
         - app_name=Node4
-        - timeout=5
+        - group=224.1.1.1
       depends_on:
         controller:
           condition:  service_started
@@ -66,7 +66,7 @@ services:
       environment:
         - Port=5055
         - app_name=Node5
-        - timeout=6
+        - group=224.1.1.1
       depends_on:
         controller:
           condition:  service_started
@@ -80,6 +80,7 @@ services:
       environment:
         - Port=5555
         - app_name=Controller
+        - group=224.1.1.1
       stdin_open: true
 
 

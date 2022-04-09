@@ -2,16 +2,18 @@ import socket
 import time
 import threading
 import json
+from tokenize import group
 import traceback
 import os
 from helper import *
 import random
-
+import struct
 
 # Get environment variables
 name = os.getenv('app_name') 
-port = int(os.getenv('Port'))
+port = 5555#int(os.getenv('Port'))
 timeout = random.randint(10, 18)
+group = os.getenv('group')
 #RAFT Variables
 state = 'f' #can be either: f = follow; l = lead; c = candadite; d = dead
 leaderexists = 0
@@ -27,7 +29,7 @@ msg = json.load(open("Message.json"))
 #set up leader functionality
 def lead(socket) -> None:
     #set gloal variables
-    global leaderexists, termcandidates, state, log, name, port, term, termvotes
+    global leaderexists, termcandidates, state, group, log, name, port, term, termvotes
     leaderexists = 1
     termvotes = 0
     termcandidates = {}
@@ -40,49 +42,54 @@ def lead(socket) -> None:
     while state == 'l':
         # Build RequestVote RPC
         msg_c['sender_name'] = name
-        msg_c['request'] = "HEARTBEAT"
+        msg_c['request'] = 'HEARTBEAT'
+        msg_c['recipient'] = 'E'
         msg_c['term'] = term
         if len(log) > 0:
            msg_c['last_log'] = log[len(log)-1]
         msg_c['log_length'] = len(log)
-        print(f"{name} created Append RPC: {msg}")
         #broadcast message
-        send_message(msg_c,"",socket,port)
-        time.sleep(.5)
+        send_message(msg_c,group,socket,port)
+        time.sleep(.25)
 
 
 #set up candidate functionality
 def candidate(socket) -> None:
     #set gloal variables
-    global leaderexists, timeout, state, log, name, port, term, termvotes
+    global leaderexists, timeout, state, log, group, name, port, term, termvotes
 
     print(name+ " is now a candidate")
     msg_c = msg
 
-    # Build RequestVote RPC
+    # Build RequestVote RPC, send to erbody
     msg_c['sender_name'] = name
+    msg_c['recipient'] = 'E'
     msg_c['request'] = "VOTEME"
     msg_c['term'] = term
     if len(log) > 0:
         msg_c['last_log'] = log[len(log)-1]
     msg_c['log_length'] = len(log)
     print(f"{name} Going on campaign: {msg_c}")
-    send_message(msg_c,"",socket,port)
+    send_message(msg_c,group,socket,port)
 
     #wait some time for votes to come in
     time.sleep(5)
 
     #let other candidates know aboout votes
     print("Sending out concensus")
+    msg_c['sender_name'] = name
     msg_c['request'] = "VOTECONCENSUS"
+    msg_c['recipient'] = 'E'
     msg_c['votes'] = termvotes
-    send_message(msg_c,"",socket,port)
+    send_message(msg_c,group,socket,port)
 
-    #wait some time for nodes to come to concensus
-    while len(termcandidates) == 0:     
-        print("waiting for concensus")
+    if state == 'f':
+        threading.Thread(target=follow, args=[socket]).start()
+        return
+    
+    print("waiting for concensus")
+    while len(termcandidates) == 0:             
         time.sleep(.25)
-    time.sleep(5)
 
     #add up votes
     print("Deciding leader")
@@ -118,40 +125,46 @@ def follow(socket) -> None:
     termvotes = 0
     termcandidates = {}
     print(name+ " is now a follower, Starting Countdown")
-
+    time.sleep(5) # give leader a second
     #countdown for follower state
     while t > 0:
-        print(f"{t} seconds left until I run for office")
+        
         
         if leaderexists: #keep reseting countdown when leader exists
             t = timeout
             leaderexists = 0 #toggle leaderexists back
         
         else: #if leader stops existing, end countdown
-            t = 0  
-        
-        t -= 1
+            t -= 1
+            print(f"{t} seconds left until I run for office")
+
         time.sleep(1)    
     
     #switch to candidate state
-    print("Beginning insurrection")
+    print("Beginning Inseurrection")
     state = 'c'
     threading.Thread(target=candidate, args=[socket]).start()
 
 #handles all messages
-def message_handle(msg_in,addr,socket) -> None:
+def message_handle(msg_in,socket) -> None:
     #set gloal variables
-    global leaderexists, timeout, state, log, name, port, term, termvotes, msg, voted
+    global leaderexists, timeout, state, log, group, name, port, term, termvotes, msg, voted
     msg_c = msg
 
     #Decodemessage
     dm = json.loads(msg_in.decode('utf-8'))
-    print(f"{name} Received the following message:{addr} => {dm}, responding as a {state}")
-    response = 0
     Request = dm['request']
     
+    #node recieving its own message, don't handle it
+    if dm['sender_name'] == name:
+        print(f"Got my own message")
+
+    #node is not recipient, don't handle it
+    elif dm['recipient'] != "E" and dm['recipient'] != name:
+        print(f"Message isnt for me: {dm}")
+    
     #node recieving command from controller
-    if(dm['sender_name'] == "Controller"):
+    elif dm['sender_name'] == "Controller":
         #turn node into a follower
         if Request == 'FOLLOW':
             #change state to follower
@@ -165,22 +178,26 @@ def message_handle(msg_in,addr,socket) -> None:
         #have node play dead
         if Request == 'PLAYDEAD':
             state = 'd'
-    
+
     #node recieving message from other node
     elif state != 'd':
         #follower recieving a candidate's vote request 
         if Request== "VOTEME":
             #if you havent voted yet, and the candadites logs are valid, give up your vote
-            if voted == 0 and dm['term'] >= term and  dm['log_length']>=len(log):
+            if voted == 0 and dm['term'] >= term:
                 #vote yes
                 msg_c['request'] = "LEADME"
                 voted = 1
+                print(f"Voted for {dm['sender_name']}")
+
             else:
                 #vote no
                 msg_c['request'] = "!LEADME"
+                print(f"Im not voting for {dm['sender_name']}!!")
             #send out message
             msg_c['sender_name'] = name
-            send_message(msg_c,dm["sender_name"],socket,port)
+            msg_c['recipient'] = dm['sender_name']
+            send_message(msg_c,group,socket,port)
 
         #candidate recieving a follower's vote respopnse     
         elif Request == "LEADME":
@@ -194,18 +211,20 @@ def message_handle(msg_in,addr,socket) -> None:
         #follower recieving a leader's heartbeat
         elif Request == "HEARTBEAT":
             #verify heartbeat
-            if dm['term'] >= term and dm['log_length']>len(log):
-                if state != 'f': #if node is a candidate or leader, but gets a valid Heartbeat,
-                    state ='f'               
-                    voted = 0
+            if dm['term'] >= term and dm['log_length']>=len(log):
                 leaderexists = 1
                 term = dm['term']
                 termvotes = 0
+                state ='f'               
+                voted = 0
+                print(f"All hail {dm['sender_name']}")
                 #if heartbeat has a log, add it to follower's log
                 if dm['last_log']:
                     log.add(dm['last_log'])
+                
             else:#invalid heartbeat, follower will become candidate
-                leaderexists = 0                
+                leaderexists = 0          
+                print(f"invalid heartbeat: {dm['sender_name']}")        
 
         #Candidates checking for new leader
         elif Request == "VOTECONCENSUS":
@@ -220,42 +239,44 @@ def message_handle(msg_in,addr,socket) -> None:
         print("Do Not Disturb")
 
     #update Controller
-    msg_c['sender_name'] = name
-    msg_c['request'] = "STATUS"
-    msg_c['term'] = term
-    if len(log) > 0:
-        msg_c['last_log'] = log[len(log)-1]
-    msg_c['log_length'] = len(log)
-    msg_c['role'] = state
-    print(f"{name} created Request Vote RPC: {msg}")
+    # msg_c['sender_name'] = name
+    # msg_c["recipient"] = "Controller"
+    # msg_c['request'] = "STATUS"
+    # msg_c['term'] = term
+    # if len(log) > 0:
+    #     msg_c['last_log'] = log[len(log)-1]
+    # msg_c['log_length'] = len(log)
+    # msg_c['role'] = state
+    #print(f"{name} created Request Vote RPC: {msg}")
 
 
 if __name__ == "__main__":
     print(f"Starting "+ name)
 
     time.sleep(10) #Give controller some time to start up
-    sender = name
-
-    # Creating Socket and binding it to the target container IP and port
-    UDP_Socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-
-    # Bind the node to sender ip and port
-    UDP_Socket.bind((sender, 5555))
-
+    
+    print("Building Multicast socket")
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(('', port))
+    mreq = struct.pack("4sl", socket.inet_aton(group), socket.INADDR_ANY)
+    sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+    time.sleep(3)
+    
     #All nodes begin as followers
-    threading.Thread(target=follow, args=[UDP_Socket]).start()
+    threading.Thread(target=follow, args=[sock]).start()
 
-    #Main thread Listening at all times
+    print("Listening ...")
     while True:
         mesg = 0
         try:
-            mesg, addr = UDP_Socket.recvfrom(1024)
+            mesg, addr = sock.recvfrom(1024)
         except:
             print(f"ERROR while fetching from socket : {traceback.print_exc()}")
 
          #Messages are handled by creating threads
         if mesg:
-            threading.Thread(target=message_handle, args=[mesg,addr,UDP_Socket]).start()
+            threading.Thread(target=message_handle, args=[mesg,sock]).start()
 
    
 

@@ -1,10 +1,12 @@
 {
   "sender_name": null,
+  "recipient":"E",
   "request": null,
   "term": null,
   "last_log":null,
   "log_length":null,
   "role":null,
   "votes":0,
-  "voted":0
+  "voted":0,
+  "msg_no":0
 }
