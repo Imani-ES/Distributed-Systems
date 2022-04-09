@@ -4,5 +4,4 @@ COPY . .
 
 EXPOSE 5555
 
-#Uncomment below command to run the test case.
 ENTRYPOINT ["python", "-u", "CNTRL.py"]

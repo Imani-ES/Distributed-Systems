@@ -61,7 +61,6 @@ services:
         controller:
           condition:  service_started
 
-   #Do not change the part below
     controller:
       container_name: Controller
       build: Controller/.
