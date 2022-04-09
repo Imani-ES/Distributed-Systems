@@ -219,16 +219,6 @@ def message_handle(msg_in,addr,socket) -> None:
     else:
         print("Do Not Disturb")
 
-    #update Controller
-    msg_c['sender_name'] = name
-    msg_c['request'] = "STATUS"
-    msg_c['term'] = term
-    if len(log) > 0:
-        msg_c['last_log'] = log[len(log)-1]
-    msg_c['log_length'] = len(log)
-    msg_c['role'] = state
-    print(f"{name} created Request Vote RPC: {msg}")
-
 
 if __name__ == "__main__":
     print(f"Starting "+ name)
