@@ -15,6 +15,7 @@ services:
         - group=224.1.1.1
         - tor1=10
         - tor2=18
+        - heartrate=.25
       depends_on:
         controller:
           condition:  service_started
@@ -28,6 +29,7 @@ services:
         - group=224.1.1.1
         - tor1=10
         - tor2=18
+        - heartrate=.25
       depends_on:
         controller:
           condition:  service_started
@@ -41,6 +43,7 @@ services:
         - group=224.1.1.1
         - tor1=10
         - tor2=18
+        - heartrate=.25
       depends_on:
         controller:
           condition:  service_started
@@ -54,6 +57,7 @@ services:
         - group=224.1.1.1
         - tor1=10
         - tor2=18
+        - heartrate=.25
       depends_on:
         controller:
           condition:  service_started
@@ -67,6 +71,7 @@ services:
         - group=224.1.1.1
         - tor1=10
         - tor2=18
+        - heartrate=.25
       depends_on:
         controller:
           condition:  service_started
@@ -83,7 +88,8 @@ services:
 
 
 
-
+# Logs stored as [term, key, Value]
+# use node_info
 
 
 

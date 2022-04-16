@@ -16,10 +16,3 @@ def send_message(msg,reciever,socket,port):
         print(f"ERROR WHILE SENDING REQUEST ACROSS : {traceback.format_exc()}")
         return 1
     return 0
-
-#important vars
-#state
-#leaderexists
-#term
-#termvotes
-#termcandidates{}

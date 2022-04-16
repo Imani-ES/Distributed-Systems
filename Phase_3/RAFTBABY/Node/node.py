@@ -10,16 +10,17 @@ import random
 import struct
 
 # Get environment variables
-name = os.getenv('app_name') or 5555
+name = os.getenv('app_name') 
+port = os.getenv('Port') or 5555
 group = os.getenv('group')
 tor1 = os.getenv("tor_1")
 tor2 = os.getenv("tor_2")
-
+heartrate = os.getenv("heartrate")
 #RAFT Variables
 leaderexists = 0
 termvotes=0
 termcandidates = {}
-
+current_leader = ''
 # Read Message Templates
 msg = json.load(open("Message.json"))
 
@@ -28,22 +29,20 @@ node_info = {
     'term': 0,
     'votedFor': '',
     'state': 'f',
-    'log':[], 
+    'log':[[0,None,None]], # Logs stored as [term, key, Value]
     'timeout':random.randint(tor1, tor2),
-    'heartbeat_interval':.25
+    'heartbeat_interval':heartrate
 }
+
+
 #set up leader functionality
-def lead(socket) -> None:
-    #set gloal variables
+def sendheartbeats():
     global leaderexists, termcandidates, group, node_info, name, port, termvotes
+    msg_c = msg
     leaderexists = 1
     termvotes = 0
     termcandidates = {}
-    node_info['term'] += 1
     heartbeat = node_info['heartbeat_interval'] 
-    print(name+ " is now a leader")
-    
-    msg_c = msg
     #send heartbeats every heartbeat_interval
     while node_info['state'] == 'l':
         msg_c['sender_name'] = name
@@ -51,16 +50,29 @@ def lead(socket) -> None:
         msg_c['recipient'] = 'E'
         msg_c['term'] = node_info['term']
         if len(node_info['log']) > 0:
-           msg_c['last_log'] = log[len(node_info['log'])-1]
+           msg_c['last_log'] = node_info['log'][len(node_info['log'])-1]
         msg_c['log_length'] = len(node_info['log'])
         send_message(msg_c,group,socket,port)
         time.sleep(heartbeat)
+def lead(socket) -> None:
+    #set gloal variables
+    global leaderexists, termcandidates, group, node_info, name, port, termvotes
+    print(name+ " is now a leader")
+    threading.Thread(target=sendheartbeats, args=[]).start()
+    #set up application server 
+    #
+    #
+    #
+    while node_info['state'] == 'l':
+        #run application
+        msg['key'] = 'log'
+        msg['value'] = node_info['log']
 
 #set up candidate functionality
 def candidate(socket) -> None:
     #set gloal variables
     global leaderexists,node_info, group, name, port, termvotes
-
+    node_info['term'] += 1
     print(f"{name} is now a candidate for office. Going on campaign...")
     msg_c = msg
 
@@ -84,7 +96,8 @@ def candidate(socket) -> None:
     msg_c['sender_name'] = name
     msg_c['request'] = "VOTECONCENSUS"
     msg_c['recipient'] = 'E'
-    msg_c['votes'] = termvotes
+    msg_c['key'] = 'votes'
+    msg_c['value'] = termvotes
     send_message(msg_c,group,socket,port)
     
     print("waiting for concensus")
@@ -114,7 +127,6 @@ def candidate(socket) -> None:
     
     return
 
-
 #set up follower functionality
 def follow(socket) -> None:
     #set gloal variables
@@ -143,7 +155,7 @@ def follow(socket) -> None:
 #handles all messages
 def message_handle(msg_in,socket) -> None:
     #set gloal variables
-    global leaderexists, node_info, group, name, port, termvotes, msg
+    global leaderexists, node_info, group, name, port, termvotes, msg, current_leader
     msg_c = msg
     #Decodemessage
     dm = json.loads(msg_in.decode('utf-8'))
@@ -161,16 +173,29 @@ def message_handle(msg_in,socket) -> None:
         if Request == 'STATUS':
             send_message(node_info,'Controller',socket,port)
         #turn node into a follower
-        if Request == 'FOLLOW':
+        elif Request == 'FOLLOW':
             #change state to follower
             node_info['state'] = 'f'
         #turn node into a candidate
-        if Request == 'TRYLEAD':
+        elif Request == 'TRYLEAD':
             if node_info['state'] != 'l':
                 leaderexists = 0
         #have node play dead
-        if Request == 'PLAYDEAD':
+        elif Request == 'PLAYDEAD':
             node_info['state'] = 'd'
+        #Add something to the log
+        elif Request == 'STORE':
+            if node_info['state'] == 'l':#store what controller wants
+                storethis = [node_info['term'],dm['key'],dm['value']]
+                print(f"store the stuff controller wants: {storethis}")
+                node_info['log'].append(storethis)
+
+            else:#send leader_info to controller
+                msg_c["request"]= 'LEADER_INFO'
+                msg_c["key"] = "LEADER"
+                msg_c["value"] = current_leader
+                send_message(msg_c,"Controller",socket,port)
+
     #node recieving message from other node
     elif node_info['state'] != 'd':
         #follower recieving a candidate's vote request 
@@ -212,7 +237,7 @@ def message_handle(msg_in,socket) -> None:
                 print(f"invalid heartbeat: {dm['sender_name']}")        
         #Candidates checking for new leader
         elif Request == "VOTECONCENSUS":
-            termcandidates[dm['sender_name']] = dm['votes']
+            termcandidates[dm['sender_name']] = dm['values']
         #Bad Message
         else:
             print(f"Bad Message @{Request}")
@@ -248,14 +273,3 @@ if __name__ == "__main__":
          #Messages are handled by creating threads
         if mesg:
             threading.Thread(target=message_handle, args=[mesg,sock]).start()
-
-   
-
-    #threading.Thread(target=listener, args=[UDP_Socket]).start()
-
-    #Starting thread 2
-    #threading.Thread(target=function_to_demonstrate_multithreading).start()
-
-    #print("Started both functions, Sleeping on the main thread for 10 seconds now")
-    #time.sleep(10)
-    #print(f"Completed Node Main Thread Node 2")
