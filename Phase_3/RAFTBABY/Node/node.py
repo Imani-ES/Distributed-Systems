@@ -10,13 +10,16 @@ import random
 import struct
 
 # Get environment variables
-name = os.getenv('app_name') 
-port = 5555#int(os.getenv('Port'))
+name = os.getenv('app_name') or 5555
 group = os.getenv('group')
+tor1 = os.getenv("tor_1")
+tor2 = os.getenv("tor_2")
+
 #RAFT Variables
 leaderexists = 0
 termvotes=0
 termcandidates = {}
+
 # Read Message Templates
 msg = json.load(open("Message.json"))
 
@@ -26,7 +29,7 @@ node_info = {
     'votedFor': '',
     'state': 'f',
     'log':[], 
-    'timeout':random.randint(10, 18),
+    'timeout':random.randint(tor1, tor2),
     'heartbeat_interval':.25
 }
 #set up leader functionality

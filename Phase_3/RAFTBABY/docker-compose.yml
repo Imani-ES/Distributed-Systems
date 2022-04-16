@@ -13,6 +13,8 @@ services:
         - Port=5555
         - app_name=Node1
         - group=224.1.1.1
+        - tor1=10
+        - tor2=18
       depends_on:
         controller:
           condition:  service_started
@@ -24,6 +26,8 @@ services:
         - Port=5555
         - app_name=Node2
         - group=224.1.1.1
+        - tor1=10
+        - tor2=18
       depends_on:
         controller:
           condition:  service_started
@@ -35,6 +39,8 @@ services:
         - Port=5555
         - app_name=Node3
         - group=224.1.1.1
+        - tor1=10
+        - tor2=18
       depends_on:
         controller:
           condition:  service_started
@@ -46,6 +52,8 @@ services:
         - Port=5555
         - app_name=Node4
         - group=224.1.1.1
+        - tor1=10
+        - tor2=18
       depends_on:
         controller:
           condition:  service_started
@@ -57,6 +65,8 @@ services:
         - Port=5555
         - app_name=Node5
         - group=224.1.1.1
+        - tor1=10
+        - tor2=18
       depends_on:
         controller:
           condition:  service_started
