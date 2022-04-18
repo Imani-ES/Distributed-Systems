@@ -29,7 +29,7 @@ node_info = {
     'term': 0,
     'votedFor': '',
     'state': 'f',
-    'log':[[0,None,None]], # Logs stored as [term, key, Value]
+    'log':[{'term':0,'key':None,'value':None}], # Logs stored as [term, key, Value]
     'timeout':random.randint(tor1, tor2),
     'heartbeat_interval':heartrate
 }
@@ -49,11 +49,13 @@ def sendheartbeats():
         msg_c['request'] = 'HEARTBEAT'
         msg_c['recipient'] = 'E'
         msg_c['term'] = node_info['term']
-        if len(node_info['log']) > 0:
-           msg_c['last_log'] = node_info['log'][len(node_info['log'])-1]
-        msg_c['log_length'] = len(node_info['log'])
+        msg_c['prev_log_term'] = node_info['log'][len(node_info['log'])-1]['term']
+        msg_c['prev_log_term'] = len(node_info['log'])-1
+        msg_c['commit_index'] = len(node_info['log'])
+        msg_c['entry'] = None
         send_message(msg_c,group,socket,port)
         time.sleep(heartbeat)
+
 def lead(socket) -> None:
     #set gloal variables
     global leaderexists, termcandidates, group, node_info, name, port, termvotes
@@ -65,8 +67,7 @@ def lead(socket) -> None:
     #
     while node_info['state'] == 'l':
         #run application
-        msg['key'] = 'log'
-        msg['value'] = node_info['log']
+        msg['commit_index'] = len(node_info['log'])
 
 #set up candidate functionality
 def candidate(socket) -> None:
@@ -81,9 +82,8 @@ def candidate(socket) -> None:
     msg_c['recipient'] = 'E'
     msg_c['request'] = "VOTEME"
     msg_c['term'] = node_info['term']
-    if len(node_info['log']) > 0:
-        msg_c['last_log'] = node_info['log'][len(node_info['log'])-1]
-    msg_c['log_length'] = len(node_info['log'])
+    msg_c['prev_log_term'] = node_info['log'][len(node_info['log'])-1]['term']
+    msg_c['prev_log_index'] = len(node_info['log'])-1
     send_message(msg_c,group,socket,port)
 
     #wait some time for votes to come in
@@ -106,14 +106,14 @@ def candidate(socket) -> None:
 
     print("Deciding leader")
     tie = 0
-    for v in termcandidates:
+    for v in termcandidates:#count votes
         if termcandidates[v] > termvotes:#become follower
             node_info['state'] = 'f'
             leaderexists = 1
             tie = 0
             threading.Thread(target=follow, args=[socket]).start()
             return
-        elif termcandidates[v] == termvotes:
+        elif termcandidates[v] == termvotes:#tie
             tie = 1
     
     if tie: #become follower
@@ -186,10 +186,32 @@ def message_handle(msg_in,socket) -> None:
         #Add something to the log
         elif Request == 'STORE':
             if node_info['state'] == 'l':#store what controller wants
-                storethis = [node_info['term'],dm['key'],dm['value']]
+                storethis = {'term':node_info['term'],'key':dm['key'],'value':dm['value']}
                 print(f"store the stuff controller wants: {storethis}")
                 node_info['log'].append(storethis)
+                #broadcasting appendrpc
+                msg_c['sender_name'] = name
+                msg_c['request'] = 'HEARTBEAT'
+                msg_c['recipient'] = 'E'
+                msg_c['term'] = node_info['term']
+                msg_c['prev_log_term'] = node_info['log'][len(node_info['log'])-2]['term']
+                msg_c['prev_log_term'] = len(node_info['log'])-2
+                msg_c['commit_index'] = len(node_info['log'])
+                msg_c['entry'] = storethis
+                send_message(msg_c,group,socket,port)
 
+            else:#send leader_info to controller
+                msg_c["request"]= 'LEADER_INFO'
+                msg_c["key"] = "LEADER"
+                msg_c["value"] = current_leader
+                send_message(msg_c,"Controller",socket,port)
+        #Retrieve Logs
+        elif Request == 'RETRIEVE':
+            if node_info['state'] == 'l':#store what controller wants
+                msg_c["request"]= 'RETRIEVE'
+                msg_c["key"] = "COMMITED_LOGS"
+                msg_c["value"] = node_info['log']
+                send_message(msg_c,"Controller",socket,port)
             else:#send leader_info to controller
                 msg_c["request"]= 'LEADER_INFO'
                 msg_c["key"] = "LEADER"
@@ -201,10 +223,10 @@ def message_handle(msg_in,socket) -> None:
         #follower recieving a candidate's vote request 
         if Request== "VOTEME":
             #if you havent voted yet, and the candadites logs are valid, give up your vote
-            if node_info['votedFor'] == '' and dm['term'] >= node_info['term']:#vote yes
-                msg_c['request'] = "LEADME"
-                node_info['votedFor'] = dm['sender_name']
-                print(f"Voted for {dm['sender_name']}")
+            if node_info['votedFor'] == '' and dm['term'] >= node_info['term'] and len(node_info['log'])-1 <= dm['prev_log_term']:#vote yes
+                    msg_c['request'] = "LEADME"
+                    node_info['votedFor'] = dm['sender_name']
+                    print(f"Voted for {dm['sender_name']}")
             else:#vote no
                 msg_c['request'] = "!LEADME"
                 print(f"Im not voting for {dm['sender_name']}!!")
@@ -222,7 +244,7 @@ def message_handle(msg_in,socket) -> None:
         #follower recieving a leader's heartbeat
         elif Request == "HEARTBEAT":
             #verify heartbeat
-            if dm['term'] >= node_info['term'] and dm['log_length']>=len(node_info['log']):
+            if dm['term'] >= node_info['term'] and node_info['log'][dm['prev_log_index']]['term'] <= dm['prev_log_term']:
                 leaderexists = 1
                 node_info['term'] = dm['term']
                 termvotes = 0
@@ -230,14 +252,25 @@ def message_handle(msg_in,socket) -> None:
                 node_info['votedFor'] = ''
                 print(f"All hail {dm['sender_name']}")
                 #if heartbeat has a log, add it to follower's log
-                if dm['last_log']:
-                    node_info['log'].add(dm['last_log'])
+                if dm['entry']:
+                    node_info['log'].append(dm['entry'])
+                #send a success msg to leader
+                msg_c['request'] = "Append_Reply"
+                msg_c['recipient'] = dm['sender_name']
+                msg_c['success'] = 'true'
+                send_message(msg_c,group,socket,port)
             else:#invalid heartbeat, follower will become candidate
                 leaderexists = 0          
-                print(f"invalid heartbeat: {dm['sender_name']}")        
+                print(f"invalid heartbeat: {dm['sender_name']}") 
+                #send a failure msg to leader       
+                msg_c['request'] = "Append_Reply"
+                msg_c['recipient'] = dm['sender_name']
+                msg_c['success'] = 'false'
+                send_message(msg_c,group,socket,port)
         #Candidates checking for new leader
         elif Request == "VOTECONCENSUS":
-            termcandidates[dm['sender_name']] = dm['values']
+            if dm['key'] == 'votes':
+                termcandidates[dm['sender_name']] = dm['value']
         #Bad Message
         else:
             print(f"Bad Message @{Request}")

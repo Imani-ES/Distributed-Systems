@@ -5,7 +5,10 @@
   "key":null,
   "value":null,
   "recipient":"E",
-  "last_log":null,
-  "log_length":null,
+  "prev_log_term":null,
+  "prev_log_index":null,
+  "commit_index":null,
+  "success":null,
+  "entry":null,
   "votes":0
 }

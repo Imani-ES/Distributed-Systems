@@ -16,3 +16,6 @@ def send_message(msg,reciever,socket,port):
         print(f"ERROR WHILE SENDING REQUEST ACROSS : {traceback.format_exc()}")
         return 1
     return 0
+
+#node_info['log'][dm['prev_log_index']]['term'] <= dm['prev_log_term']
+#@verify heartbeat:will this work if a node jumps in?
