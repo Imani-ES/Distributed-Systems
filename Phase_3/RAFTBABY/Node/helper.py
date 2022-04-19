@@ -20,6 +20,6 @@ def send_message(msg,reciever,socket,port):
 #node_info['log'][dm['prev_log_index']]['term'] <= dm['prev_log_term']
 #@verify heartbeat:will this work if a node jumps in?
 
-#new node send out "Im new" message,
-#nodes respond with the leader
-#leader sends log to copy
+#new node send out "CATCHUP" message,
+#nodes respond with CATCHUP message and leader info
+#leader sends CATCHUP message with logs
