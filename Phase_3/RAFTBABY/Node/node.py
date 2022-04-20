@@ -8,6 +8,7 @@ import os
 from helper import *
 import random
 import struct
+from webserver import *
 
 # Get environment variables
 name = os.getenv('app_name') 
@@ -16,6 +17,8 @@ group = os.getenv('group')
 tor1 = os.getenv("tor_1")
 tor2 = os.getenv("tor_2")
 heartrate = os.getenv("heartrate")
+client_host = os.getenv("client_host")
+client_port = os.getenv("client_port")
 #RAFT Variables
 leaderexists = 0
 termvotes=0
@@ -34,17 +37,21 @@ node_info = {
     'heartbeat_interval':heartrate
 }
 
-
-#set up leader functionality
-def sendheartbeats():
+def lead(socket) -> None:
+    #set gloal variables
     global leaderexists, termcandidates, group, node_info, name, port, termvotes
     msg_c = msg
     leaderexists = 1
     termvotes = 0
     termcandidates = {}
     heartbeat = node_info['heartbeat_interval'] 
-    #send heartbeats every heartbeat_interval
+    print(name+ " is now a leader")
+    
+    # run client application 
+    run_client(client_host,client_port)
+
     while node_info['state'] == 'l':
+        #send heartbeats
         msg_c['sender_name'] = name
         msg_c['request'] = 'HEARTBEAT'
         msg_c['recipient'] = 'E'
@@ -55,19 +62,10 @@ def sendheartbeats():
         msg_c['entry'] = None
         send_message(msg_c,group,socket,port)
         time.sleep(heartbeat)
-
-def lead(socket) -> None:
-    #set gloal variables
-    global leaderexists, termcandidates, group, node_info, name, port, termvotes
-    print(name+ " is now a leader")
-    threading.Thread(target=sendheartbeats, args=[]).start()
-    #set up application server 
-    #
-    #
-    #
-    while node_info['state'] == 'l':
-        #run application
-        msg['commit_index'] = len(node_info['log'])
+    
+    # kill client application
+    kill_client()
+    
 
 #set up candidate functionality
 def candidate(socket) -> None:

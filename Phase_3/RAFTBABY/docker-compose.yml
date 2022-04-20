@@ -16,6 +16,8 @@ services:
         - tor1=10
         - tor2=18
         - heartrate=.25
+        - client_host=220.1.1.1
+        - client_port=5000
       depends_on:
         controller:
           condition:  service_started
@@ -30,6 +32,8 @@ services:
         - tor1=10
         - tor2=18
         - heartrate=.25
+        - client_host=220.1.1.1
+        - client_port=5000
       depends_on:
         controller:
           condition:  service_started
@@ -44,6 +48,8 @@ services:
         - tor1=10
         - tor2=18
         - heartrate=.25
+        - client_host=220.1.1.1
+        - client_port=5000
       depends_on:
         controller:
           condition:  service_started
@@ -58,6 +64,8 @@ services:
         - tor1=10
         - tor2=18
         - heartrate=.25
+        - client_host=220.1.1.1
+        - client_port=5000
       depends_on:
         controller:
           condition:  service_started
@@ -72,6 +80,8 @@ services:
         - tor1=10
         - tor2=18
         - heartrate=.25
+        - client_host=220.1.1.1
+        - client_port=5000
       depends_on:
         controller:
           condition:  service_started
