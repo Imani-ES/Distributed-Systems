@@ -18,8 +18,18 @@ def send_message(msg,reciever,socket,port):
     return 0
 
 #node_info['log'][dm['prev_log_index']]['term'] <= dm['prev_log_term']
-#@verify heartbeat:will this work if a node jumps in?
+#@verify heartbeat:will this work if a node jumps in? (LaggingNode Needs to CATCHUP)
+
+#bina's netindex would work, but it involves lots of overhead on the leader side
+#might make more sense to have the LaggingNode give their latest 
 
 #new node send out "CATCHUP" message,
 #nodes respond with CATCHUP message and leader info
 #leader sends CATCHUP message with logs
+#Problem: When follower trying to catch up recieves heart beat, 
+#   it cant accept the log since it's previous logs arent comparrable
+#Solution: When followers get heart beat, instead of replying with "success = true or false,"
+#   respond with the message index they are waiting for
+#   The leader node will then reply based on that index
+# Why not just have follower send CATCHUP, leader send entire log, 
+# and let follower determine whole log?
