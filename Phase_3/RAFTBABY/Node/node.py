@@ -24,6 +24,7 @@ leaderexists = 0
 termvotes=0
 termcandidates = {}
 current_leader = ''
+find_leader = []
 # Read Message Templates
 msg = json.load(open("Message.json"))
 
@@ -240,6 +241,14 @@ def message_handle(msg_in,socket) -> None:
         elif Request == "!LEADME":
             print(f"{dm['sender_name']} is a hater")
         #follower recieving a leader's heartbeat
+        elif Request == "LAGGING":
+            msg_c["request"]= 'LEADER_INFO'
+            msg_c["key"] = "LEADER"
+            msg_c["value"] = current_leader
+            msg_c['recipient'] = dm['sender_name']
+            send_message(msg_c,group,socket,port)
+        elif Request == "LEADER_INFO" and dm['recipient'] == name:
+            find_leader.append(msg_c['value'])
         elif Request == "HEARTBEAT":
             #verify heartbeat
             if dm['term'] >= node_info['term'] and node_info['log'][dm['prev_log_index']]['term'] <= dm['prev_log_term']:
@@ -257,14 +266,39 @@ def message_handle(msg_in,socket) -> None:
                 msg_c['recipient'] = dm['sender_name']
                 msg_c['success'] = 'true'
                 send_message(msg_c,group,socket,port)
-            else:#invalid heartbeat, follower will become candidate
-                leaderexists = 0          
+            else:#invalid heartbeat     
                 print(f"invalid heartbeat: {dm['sender_name']}") 
                 #send a failure msg to leader       
                 msg_c['request'] = "Append_Reply"
                 msg_c['recipient'] = dm['sender_name']
                 msg_c['success'] = 'false'
                 send_message(msg_c,group,socket,port)
+                #get consensus on who leader is
+                msg_c['request'] = "LAGGING"
+                msg_c['recipient'] = 'E'
+                send_message(msg_c,group,socket,port)
+                #wait a few in this message thread while nodes respond
+                time.sleep(2)
+                #choose most popular leader as current leader
+                countup = {}
+                most =0
+                lea = ''
+                for l in find_leader:
+                    if l in countup:
+                        countup[l] += 1
+                        if countup[l] >= most:
+                            most = countup[l]
+                            lea = l
+                    else:
+                        countup.append({l:0})
+                current_leader = lea
+                #send catchup request to leader
+                msg_c['request'] = "CATCHMEUP"
+                msg_c['recipient'] = current_leader
+                send_message(msg_c,group,socket,port)
+        #Lagging node to Leader
+        elif Request == "CATCHMEUP":
+            
         #Candidates checking for new leader
         elif Request == "VOTECONCENSUS":
             if dm['key'] == 'votes':

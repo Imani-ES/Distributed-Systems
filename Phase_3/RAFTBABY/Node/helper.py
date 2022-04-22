@@ -23,7 +23,7 @@ def send_message(msg,reciever,socket,port):
 #bina's netindex would work, but it involves lots of overhead on the leader side
 #might make more sense to have the LaggingNode give their latest 
 
-#new node send out "CATCHUP" message,
+#new node send out "Lagging" message,
 #nodes respond with CATCHUP message and leader info
 #leader sends CATCHUP message with logs
 #Problem: When follower trying to catch up recieves heart beat, 
