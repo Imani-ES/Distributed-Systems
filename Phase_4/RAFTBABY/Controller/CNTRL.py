@@ -27,30 +27,39 @@ def listener(socket) -> None:
 
          #Messages are handled by creating threads
         if mesg:
-            threading.Thread(target=message_handle, args=[mesg,addr]).start()
+            threading.Thread(target=message_handle, args=[mesg]).start()
 
-def message_handle(mesg,addr) -> None:
+def message_handle(mesg) -> None:
     
     #Decodemessage
     dm = json.loads(mesg.decode('utf-8'))
-    print(f"{name} Received the following message:{addr} => {dm}, responding as a {state}")
+    print(f"{name} Received the following message: {dm}")
     
 
 #start listening thread
 threading.Thread(target=listener, args=[sock]).start()
-
+cycle = 0
+time.sleep(40)#nodes take mad long to start
 #main thread taking commands
 while True:
     print("Welcome to HQ, enter Node first, then it's role.")
-    target= input("Enter an Node")
-    req = input(f"Enter {target}'s new role: either [FOLLOW],[RUNFOROFFICE], or [DIE]")
-     
+    #target= input("Enter an Node")
+    #req = input(f"Enter {target}'s new role: either [FOLLOW],[RUNFOROFFICE], or [DIE]")
     #Build message
-    msg['sender_name'] = name
-    msg['request'] = req
-
+    if cycle%2:
+        msg['sender_name'] = name
+        msg['request'] = 'STORE'
+        msg['key'] = 'Cycle'+str(cycle)
+        msg['value'] = 'Chicken'
+    elif cycle%3:
+        msg['sender_name'] = name
+        msg['request'] = 'RETRIEVE'
+    else:
+        msg['sender_name'] = name
+        msg['request'] = 'STATUS'
+    
     # Request
-    print(f"Request Created : {msg}")
+    print(f"Sending Request: {msg}")
     # Send Message
     try:
         # Encoding and sending the message
@@ -58,4 +67,5 @@ while True:
     except:
         #  socket.gaierror: [Errno -3] would be thrown if target IP container does not exist or exits, write your listener
         print(f"ERROR WHILE SENDING REQUEST ACROSS : {traceback.format_exc()}")
+    cycle += 1
     time.sleep(10)

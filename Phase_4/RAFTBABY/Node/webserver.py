@@ -12,24 +12,22 @@ socketio = SocketIO(app)
 @app.route('/')
 def index():
     return render_template('index.html')
-
 # Handler for a message recieved over 'connect' channel
 @socketio.on('connect')
 def test_connect():
-    send('greetings',{'data':"Greetings from: "+app_name})
-    send('chat_history',{'data':JSON.stringify(chat_history)})
-
+    send('greetings',{'data':"Greetings from: "+name})
+    send('chat_history',{'data':chat_history})
 @socketio.on('chat')
 def handle_chat(chat):
     send(chat, namespace='/chat')
     #AppendRPC w chat history to followers
     #send chat history back to clients
-    send('chat_history',{'data':JSON.stringify(chat_history)})
+    send('chat_history',{'data':chat_history})
 
 
 # Notice how socketio.run takes care of app instantiation as well.
-def run_client(host,port):
+def run_client(host,port,socketio,app):
     socketio.run(app, host=host,port = port)
 
-def kill_client():
+def kill_client(socketio):
     socketio.disconnect()

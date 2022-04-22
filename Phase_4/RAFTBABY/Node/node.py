@@ -12,19 +12,25 @@ from webserver import *
 
 # Get environment variables
 name = os.getenv('app_name') 
-port = os.getenv('Port') or 5555
+port = int(os.getenv('Port')) or 5555
 group = os.getenv('group')
-tor1 = os.getenv("tor_1")
-tor2 = os.getenv("tor_2")
-heartrate = os.getenv("heartrate")
+tor1 = int(os.getenv('tor1'))
+tor2 = int(os.getenv("tor2"))
+heartrate = float(os.getenv("heartrate"))
 client_host = os.getenv("client_host")
-client_port = os.getenv("client_port")
+client_port = int(os.getenv("client_port"))
+#print(f"Global variables:\nname:{name}\nport:{port}\ngroup:{group}\ntor1:{tor1}\ntor2:{tor2}\nheartrate:{heartrate}\nclient_host:{client_host}\nclient_port:{client_port}")
+
 #RAFT Variables
 leaderexists = 0
 termvotes=0
 termcandidates = {}
 current_leader = ''
 find_leader = []
+
+#other global vars
+chat_history = ['Welcome all']
+
 # Read Message Templates
 msg = json.load(open("Message.json"))
 
@@ -38,20 +44,24 @@ node_info = {
     'heartbeat_interval':heartrate
 }
 
+#set up lead functionality
 def lead(socket) -> None:
     #set gloal variables
-    global leaderexists, termcandidates, group, node_info, name, port, termvotes
+    global chat_history, current_leader, leaderexists, termcandidates, group, node_info, name, port, termvotes
     msg_c = msg
     msg_c['sender_name'] = name
+    node_info['votedFor'] = ''
+    current_leader = name
     leaderexists = 1
     termvotes = 0
     termcandidates = {}
     heartbeat = node_info['heartbeat_interval'] 
     print(name+ " is now a leader")
     
-    # run client application 
-    run_client(client_host,client_port)
-
+    print(name+ " running client application")  
+    #client app # app = setup_app() ; run_client(client_host,client_port,app[0],app[1])
+    
+    print(name+ " Sending Heartbeats")  
     while node_info['state'] == 'l':
         #send heartbeats
         msg_c['request'] = 'HEARTBEAT'
@@ -67,12 +77,12 @@ def lead(socket) -> None:
     # kill client application
     kill_client()
     
-
 #set up candidate functionality
 def candidate(socket) -> None:
     #set gloal variables
     global leaderexists,node_info, group, name, port, termvotes
     node_info['term'] += 1
+    node_info['votedFor'] = ''
     print(f"{name} is now a candidate for office. Going on campaign...")
     msg_c = msg
 
@@ -165,7 +175,7 @@ def message_handle(msg_in,socket) -> None:
         print(f"Got my own message")
     #node is not recipient, don't handle it
     elif dm['recipient'] != "E" and dm['recipient'] != name:
-        print(f"Message isnt for me: {dm}")
+        print(f"Message isnt for me")
     #node recieving command from controller
     elif dm['sender_name'] == "Controller":
         #UPDATE
@@ -197,8 +207,9 @@ def message_handle(msg_in,socket) -> None:
                 msg_c['commit_index'] = len(node_info['log'])
                 msg_c['entry'] = storethis
                 send_message(msg_c,group,socket,port)
-
+                print(f"New log:{node_info['log']}")
             else:#send leader_info to controller
+                print("Sending LEADER_INFO to controller")
                 msg_c["request"]= 'LEADER_INFO'
                 msg_c["key"] = "LEADER"
                 msg_c["value"] = current_leader
@@ -257,6 +268,7 @@ def message_handle(msg_in,socket) -> None:
                 node_info['term'] = dm['term']
                 termvotes = 0
                 node_info['state'] ='f'               
+                current_leader = dm['sender_name']
                 node_info['votedFor'] = ''
                 print(f"All hail {dm['sender_name']}")
                 #if heartbeat has a log, add it to follower's log
@@ -312,11 +324,17 @@ def message_handle(msg_in,socket) -> None:
             if dm['sender_name'] == current_leader:
                 node_info['log'] = msg_c['value']
                 leaderexists = 1
-
         #Candidates checking for new leader
         elif Request == "VOTECONCENSUS":
             if dm['key'] == 'votes':
                 termcandidates[dm['sender_name']] = dm['value']
+        #Append_Reply from followers to leader
+        elif Request == "Append_Reply":
+            if name == dm['recipient'] and name == current_leader:
+                if dm['success'] == 'true':
+                    print(f'{dm["sender_name"]} Loves me :)')
+                else:
+                    print(f'{dm["sender_name"]} Hates me :(')
         #Bad Message
         else:
             print(f"Bad Message @{Request}")

@@ -14,17 +14,20 @@ from webserver import *
 name = os.getenv('app_name') 
 port = os.getenv('Port') or 5555
 group = os.getenv('group')
-tor1 = os.getenv("tor_1")
-tor2 = os.getenv("tor_2")
+tor1 = int(os.getenv("tor_1"))
+tor2 = int(os.getenv("tor_2"))
 heartrate = os.getenv("heartrate")
 client_host = os.getenv("client_host")
 client_port = os.getenv("client_port")
+print(f"Global variables:\nname:{name}\nport:{port}\ngroup:{group}\ntor1:{tor1}\ntor2:{tor2}\nheartrate:{heartrate}\nclient_host:{client_host}\nclient_port:{client_port}")
+
 #RAFT Variables
 leaderexists = 0
 termvotes=0
 termcandidates = {}
 current_leader = ''
 find_leader = []
+
 # Read Message Templates
 msg = json.load(open("Message.json"))
 
