@@ -298,7 +298,18 @@ def message_handle(msg_in,socket) -> None:
                 send_message(msg_c,group,socket,port)
         #Lagging node to Leader
         elif Request == "CATCHMEUP":
-            
+            #send entire log history to lagger
+            msg_c['request'] = "CATCHUP"
+            msg_c['recipient'] = current_leader
+            msg_c['key'] = 'Logs'
+            msg_c['value'] = node_info['log']
+            send_message(msg_c,group,socket,port)
+        #Leader trying to CATCHUP Lagging Node
+        elif Request == "CATCHUP":
+            #update log with leaders log
+            if dm['sender_name'] == current_leader:
+                node_info['log'] = msg_c['value']
+                
         #Candidates checking for new leader
         elif Request == "VOTECONCENSUS":
             if dm['key'] == 'votes':
