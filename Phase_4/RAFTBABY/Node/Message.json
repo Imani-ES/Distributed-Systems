@@ -1,0 +1,14 @@
+{
+  "sender_name": null,
+  "request": null,
+  "term": null,
+  "key":null,
+  "value":null,
+  "recipient":"E",
+  "prev_log_term":null,
+  "prev_log_index":null,
+  "commit_index":null,
+  "success":null,
+  "entry":null,
+  "votes":0
+}
