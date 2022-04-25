@@ -13,14 +13,11 @@ services:
         - Port=5555
         - app_name=Node1
         - group=224.1.1.1
-        - tor1=10
-        - tor2=18
+        - tor1=5
+        - tor2=10
         - heartrate=.25
         - client_host=220.1.1.1
         - client_port=5000
-      depends_on:
-        controller:
-          condition:  service_started
 
     node2:
       container_name: Node2
@@ -29,14 +26,11 @@ services:
         - Port=5555
         - app_name=Node2
         - group=224.1.1.1
-        - tor1=10
-        - tor2=18
+        - tor1=5
+        - tor2=10
         - heartrate=.25
         - client_host=220.1.1.1
         - client_port=5000
-      depends_on:
-        controller:
-          condition:  service_started
 
     node3:
       container_name: Node3
@@ -45,14 +39,11 @@ services:
         - Port=5555
         - app_name=Node3
         - group=224.1.1.1
-        - tor1=10
-        - tor2=18
+        - tor1=5
+        - tor2=10
         - heartrate=.25
         - client_host=220.1.1.1
         - client_port=5000
-      depends_on:
-        controller:
-          condition:  service_started
 
     node4:
       container_name: Node4
@@ -61,14 +52,11 @@ services:
         - Port=5555
         - app_name=Node4
         - group=224.1.1.1
-        - tor1=10
-        - tor2=18
+        - tor1=5
+        - tor2=10
         - heartrate=.25
         - client_host=220.1.1.1
         - client_port=5000
-      depends_on:
-        controller:
-          condition:  service_started
 
     node5:
       container_name: Node5
@@ -77,14 +65,11 @@ services:
         - Port=5555
         - app_name=Node5
         - group=224.1.1.1
-        - tor1=10
-        - tor2=18
+        - tor1=5
+        - tor2=10
         - heartrate=.25
         - client_host=220.1.1.1
         - client_port=5000
-      depends_on:
-        controller:
-          condition:  service_started
 
     controller:
       container_name: Controller
@@ -94,7 +79,17 @@ services:
         - app_name=Controller
         - group=224.1.1.1
       stdin_open: true
-
+      depends_on:
+        node1:
+          condition:  service_started
+        node2:
+          condition:  service_started
+        node3:
+          condition:  service_started
+        node4:
+          condition:  service_started
+        node5:
+          condition:  service_started
 
 
 

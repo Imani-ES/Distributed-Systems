@@ -80,9 +80,10 @@ def lead(socket) -> None:
 #set up candidate functionality
 def candidate(socket) -> None:
     #set gloal variables
-    global leaderexists,node_info, group, name, port, termvotes
+    global leaderexists,node_info, group, name, port, termvotes, current_leader
     node_info['term'] += 1
     node_info['votedFor'] = ''
+    current_leader = ''
     print(f"{name} is now a candidate for office. Going on campaign...")
     msg_c = msg
 
@@ -95,8 +96,8 @@ def candidate(socket) -> None:
     msg_c['prev_log_index'] = len(node_info['log'])-1
     send_message(msg_c,group,socket,port)
 
-    #wait some time for votes to come in
-    time.sleep(3*node_info['timeout'])
+    #wait a bit  for votes to come in
+    time.sleep(1)
     if node_info['state'] == 'f': # if recieved a valid heartbeat, switch to follow state
         threading.Thread(target=follow, args=[socket]).start()
         return
@@ -110,7 +111,7 @@ def candidate(socket) -> None:
     
     print("waiting for concensus")
     while len(termcandidates) == 0:             
-        time.sleep(node_info['timeout'])
+        time.sleep(1)
 
     print("Deciding leader")
     tie = 0
@@ -143,7 +144,7 @@ def follow(socket) -> None:
     termvotes = 0
     termcandidates = {}
     print(name+ " is now a follower, Starting Countdown")
-    time.sleep(5) # give leader a second
+    time.sleep(t) # give leader a second
     #countdown for follower state
     while t > 0:    
         if leaderexists: #keep reseting countdown when leader exists
@@ -172,15 +173,19 @@ def message_handle(msg_in,socket) -> None:
     
     #node recieving its own message, don't handle it
     if dm['sender_name'] == name:
-        print(f"Got my own message")
+        time.sleep(.25)
     #node is not recipient, don't handle it
     elif dm['recipient'] != "E" and dm['recipient'] != name:
-        print(f"Message isnt for me")
+        time.sleep(.25)
     #node recieving command from controller
     elif dm['sender_name'] == "Controller":
         #UPDATE
         if Request == 'STATUS':
-            send_message(node_info,'Controller',socket,port)
+            msg_c['recipient'] = 'Controller'
+            msg_c['request'] = "STATUS"
+            msg_c['key'] = 'Node_Info'
+            msg_c['value'] = node_info
+            send_message(msg_c,group,socket,port)
         #turn node into a follower
         elif Request == 'FOLLOW':
             #change state to follower
@@ -191,7 +196,8 @@ def message_handle(msg_in,socket) -> None:
                 leaderexists = 0
         #have node play dead
         elif Request == 'PLAYDEAD':
-            node_info['state'] = 'd'
+            if node_info['state'] == 'l':
+                node_info['state'] = 'd'
         #Add something to the log
         elif Request == 'STORE':
             if node_info['state'] == 'l':#store what controller wants
@@ -210,29 +216,33 @@ def message_handle(msg_in,socket) -> None:
                 print(f"New log:{node_info['log']}")
             else:#send leader_info to controller
                 print("Sending LEADER_INFO to controller")
-                msg_c["request"]= 'LEADER_INFO'
-                msg_c["key"] = "LEADER"
-                msg_c["value"] = current_leader
-                send_message(msg_c,"Controller",socket,port)
+                msg_c['request']= 'LEADER_INFO'
+                msg_c['recipient'] = 'Controller'
+                msg_c['key'] = "LEADER"
+                msg_c['value'] = current_leader
+                send_message(msg_c,group,socket,port)
         #Retrieve Logs
         elif Request == 'RETRIEVE':
             if node_info['state'] == 'l':#store what controller wants
-                msg_c["request"]= 'RETRIEVE'
-                msg_c["key"] = "COMMITED_LOGS"
-                msg_c["value"] = node_info['log']
-                send_message(msg_c,"Controller",socket,port)
+                msg_c['request']= 'RETRIEVE'
+                msg_c['key'] = "COMMITED_LOGS"
+                msg_c['recipient'] = 'Controller'
+                msg_c['value'] = node_info['log']
+                send_message(msg_c,group,socket,port)
             else:#send leader_info to controller
-                msg_c["request"]= 'LEADER_INFO'
-                msg_c["key"] = "LEADER"
-                msg_c["value"] = current_leader
-                send_message(msg_c,"Controller",socket,port)
+                msg_c['request']= 'LEADER_INFO'
+                msg_c['key'] = "LEADER"
+                msg_c['value'] = current_leader
+                msg_c['recipient'] = 'Controller'
+                send_message(msg_c,group,socket,port)
 
     #node recieving message from other node
     elif node_info['state'] != 'd':
         #follower recieving a candidate's vote request 
         if Request== "VOTEME":
+            print(f"Vote request: {dm} \n My State: {node_info}")
             #if you havent voted yet, and the candadites logs are valid, give up your vote
-            if node_info['votedFor'] == '' and dm['term'] >= node_info['term'] and len(node_info['log'])-1 <= dm['prev_log_term']:#vote yes
+            if node_info['votedFor'] == '' and dm['term'] >= node_info['term'] and dm['prev_log_term'] >= len(node_info['log'])-1:#vote yes
                     msg_c['request'] = "LEADME"
                     node_info['votedFor'] = dm['sender_name']
                     print(f"Voted for {dm['sender_name']}")
@@ -252,9 +262,9 @@ def message_handle(msg_in,socket) -> None:
         #Node recieving message from Lagging Node
         elif Request == "LAGGING":
             if current_leader != '':
-                msg_c["request"]= 'LEADER_INFO'
-                msg_c["key"] = "LEADER"
-                msg_c["value"] = current_leader
+                msg_c['request']= 'LEADER_INFO'
+                msg_c['key'] = "LEADER"
+                msg_c['value'] = current_leader
                 msg_c['recipient'] = dm['sender_name']
                 send_message(msg_c,group,socket,port)
         #From node to Lagging Node
@@ -270,7 +280,7 @@ def message_handle(msg_in,socket) -> None:
                 node_info['state'] ='f'               
                 current_leader = dm['sender_name']
                 node_info['votedFor'] = ''
-                print(f"All hail {dm['sender_name']}")
+                #print(f"All hail {dm['sender_name']}")
                 #if heartbeat has a log, add it to follower's log
                 if dm['entry']:
                     node_info['log'].append(dm['entry'])
@@ -291,7 +301,7 @@ def message_handle(msg_in,socket) -> None:
                 msg_c['recipient'] = 'E'
                 send_message(msg_c,group,socket,port)
                 #wait a few in this message thread while nodes respond
-                time.sleep(2)
+                time.sleep(1)
                 #choose most popular leader as current leader
                 countup = {}
                 most =0
@@ -346,8 +356,6 @@ def message_handle(msg_in,socket) -> None:
 if __name__ == "__main__":
     print(f"Starting "+ name)
 
-    time.sleep(10) #Give controller some time to start up
-    
     print("Building Multicast socket")
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

@@ -7,7 +7,7 @@ import traceback
 import os
 
 def send_message(msg,reciever,socket,port):
-    print(f"Sending {msg['request']} to {msg['recipient']} ")
+    #print(f"Sending {msg['request']} to {msg['recipient']} ")
     try:
         # Encoding and sending the message
         socket.sendto(json.dumps(msg).encode('utf-8'), (reciever, port))
