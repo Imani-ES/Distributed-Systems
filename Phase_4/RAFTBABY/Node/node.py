@@ -242,7 +242,7 @@ def message_handle(msg_in,socket) -> None:
         if Request== "VOTEME":
             print(f"Vote request: {dm} \n My State: {node_info}")
             #if you havent voted yet, and the candadites logs are valid, give up your vote
-            if node_info['votedFor'] == '' and dm['term'] >= node_info['term'] and dm['prev_log_term'] >= len(node_info['log'])-1:#vote yes
+            if node_info['votedFor'] == '' and dm['term'] >= node_info['term'] and dm['prev_log_index'] >= len(node_info['log'])-1:#vote yes
                     msg_c['request'] = "LEADME"
                     node_info['votedFor'] = dm['sender_name']
                     print(f"Voted for {dm['sender_name']}")
