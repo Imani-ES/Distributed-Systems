@@ -259,21 +259,35 @@ def message_handle(msg_in,socket) -> None:
         #candidate recieving a follower's vote respopnse  
         elif Request == "!LEADME":
             print(f"{dm['sender_name']} is a hater")
-        #Node recieving message from Lagging Node
-        elif Request == "LAGGING":
-            if current_leader != '':
-                msg_c['request']= 'LEADER_INFO'
-                msg_c['key'] = "LEADER"
-                msg_c['value'] = current_leader
-                msg_c['recipient'] = dm['sender_name']
-                send_message(msg_c,group,socket,port)
-        #From node to Lagging Node
-        elif Request == "LEADER_INFO" and dm['recipient'] == name:
-            find_leader.append(msg_c['value'])
         #follower recieving a leader's heartbeat
         elif Request == "HEARTBEAT":
             #verify heartbeat
-            if dm['term'] >= node_info['term'] and node_info['log'][dm['prev_log_index']]['term'] <= dm['prev_log_term']:
+            if dm['prev_log_index'] >= len(node_info['log'])-1:#Lagger
+                #get consensus on who leader is
+                msg_c['request'] = "LAGGING"
+                msg_c['recipient'] = 'E'
+                send_message(msg_c,group,socket,port)
+                #wait a few in this message thread while nodes respond
+                time.sleep(1)
+                #choose most popular leader as current leader
+                countup = {}
+                most =0
+                lea = ''
+                for l in find_leader:
+                    if l in countup:
+                        countup[l] += 1
+                        if countup[l] >= most:
+                            most = countup[l]
+                            lea = l
+                    else:
+                        countup[l]=0
+                current_leader = lea
+                #send catchup request to leader
+                find_leader = []
+                msg_c['request'] = "CATCHMEUP"
+                msg_c['recipient'] = current_leader
+                send_message(msg_c,group,socket,port)
+            elif dm['term'] >= node_info['term'] and node_info['log'][dm['prev_log_index']]['term'] <= dm['prev_log_term']:
                 leaderexists = 1
                 node_info['term'] = dm['term']
                 termvotes = 0
@@ -296,30 +310,18 @@ def message_handle(msg_in,socket) -> None:
                 msg_c['recipient'] = dm['sender_name']
                 msg_c['success'] = 'false'
                 send_message(msg_c,group,socket,port)
-                #get consensus on who leader is
-                msg_c['request'] = "LAGGING"
-                msg_c['recipient'] = 'E'
+                
+        #Node recieving message from Lagging Node
+        elif Request == "LAGGING":
+            if current_leader != '':
+                msg_c['request']= 'LEADER_INFO'
+                msg_c['key'] = "LEADER"
+                msg_c['value'] = current_leader
+                msg_c['recipient'] = dm['sender_name']
                 send_message(msg_c,group,socket,port)
-                #wait a few in this message thread while nodes respond
-                time.sleep(1)
-                #choose most popular leader as current leader
-                countup = {}
-                most =0
-                lea = ''
-                for l in find_leader:
-                    if l in countup:
-                        countup[l] += 1
-                        if countup[l] >= most:
-                            most = countup[l]
-                            lea = l
-                    else:
-                        countup.append({l:0})
-                current_leader = lea
-                #send catchup request to leader
-                find_leader = []
-                msg_c['request'] = "CATCHMEUP"
-                msg_c['recipient'] = current_leader
-                send_message(msg_c,group,socket,port)
+        #From node to Lagging Node
+        elif Request == "LEADER_INFO" and dm['recipient'] == name:
+            find_leader.append(msg_c['value'])
         #Lagging node to Leader
         elif Request == "CATCHMEUP":
             #send entire log history to lagger
