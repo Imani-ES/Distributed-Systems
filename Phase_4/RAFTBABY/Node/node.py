@@ -164,7 +164,7 @@ def follow(socket) -> None:
 #handles all messages
 def message_handle(msg_in,socket) -> None:
     #set gloal variables
-    global leaderexists, node_info, group, name, port, termvotes, msg, current_leader
+    global leaderexists, node_info, group, name, port, termvotes, msg, current_leader, find_leader
     msg_c = msg
     msg_c['sender_name'] = name
     #Decodemessage
