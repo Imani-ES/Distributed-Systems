@@ -26,7 +26,7 @@ def listener(socket) -> None:
     print ("Listening...")
     while True:
         try:
-            mesg, addr = socket.recvfrom(1024)
+            mesg, addr = socket.recvfrom(2048)
         except:
             print(f"ERROR while fetching from socket : {traceback.print_exc()}")
 
