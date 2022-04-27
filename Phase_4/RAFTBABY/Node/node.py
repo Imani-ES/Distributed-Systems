@@ -373,7 +373,7 @@ if __name__ == "__main__":
     while True:
         mesg = 0
         try:
-            mesg, addr = sock.recvfrom(1024)
+            mesg, addr = sock.recvfrom(2048)
         except:
             print(f"ERROR while fetching from socket : {traceback.print_exc()}")
 
