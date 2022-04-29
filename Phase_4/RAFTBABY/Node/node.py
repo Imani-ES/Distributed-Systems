@@ -262,6 +262,7 @@ def message_handle(msg_in,socket) -> None:
             print(f"{dm['sender_name']} is a hater")
         #follower recieving a leader's heartbeat
         elif Request == "HEARTBEAT":
+            #Need state if node gets stuck in 
             #verify heartbeat
             if dm['prev_log_index'] > len(node_info['log']):#Lagger
                 #get consensus on who leader is
@@ -307,7 +308,8 @@ def message_handle(msg_in,socket) -> None:
                 msg_c['success'] = 'true'
                 send_message(msg_c,group,socket,port)
             else:#invalid heartbeat     
-                print(f"invalid heartbeat: {dm['sender_name']}") 
+                print(f"invalid heartbeat: {dm['sender_name']}")
+                print(f"My state: {node_info}, \n Leader msg {dm}") 
                 #send a failure msg to leader       
                 msg_c['request'] = "Append_Reply"
                 msg_c['recipient'] = dm['sender_name']
