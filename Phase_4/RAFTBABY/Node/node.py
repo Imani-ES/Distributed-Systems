@@ -270,6 +270,7 @@ def message_handle(msg_in,socket) -> None:
                 #wait a few in this message thread while nodes respond
                 time.sleep(1)
                 #choose most popular leader as current leader
+                print(f"Possible Leaders: {find_leader}")
                 countup = {}
                 most =0
                 lea = ''
@@ -322,7 +323,8 @@ def message_handle(msg_in,socket) -> None:
                 send_message(msg_c,group,socket,port)
         #From node to Lagging Node
         elif Request == "LEADER_INFO" and dm['recipient'] == name:
-            find_leader.append(msg_c['value'])
+            if msg_c['value']:
+                find_leader.append(msg_c['value'])
         #Lagging node to Leader
         elif Request == "CATCHMEUP":
             #send entire log history to lagger
