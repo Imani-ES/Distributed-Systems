@@ -46,7 +46,7 @@ if __name__ == "__main__":
     sock.bind(('', port))
     mreq = struct.pack("4sl", socket.inet_aton(group), socket.INADDR_ANY)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
-    time.sleep(25)
+    time.sleep(40)
     #start listening thread
     threading.Thread(target=listener, args=[sock]).start()
     cycle = 0

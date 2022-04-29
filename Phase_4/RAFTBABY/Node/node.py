@@ -75,7 +75,7 @@ def lead(socket) -> None:
         time.sleep(heartbeat)
     
     # kill client application
-    kill_client()
+    #kill_client()
     
 #set up candidate functionality
 def candidate(socket) -> None:
