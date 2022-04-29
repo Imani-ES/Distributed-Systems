@@ -74,6 +74,7 @@ def lead(socket) -> None:
         send_message(msg_c,group,socket,port)
         time.sleep(heartbeat)
     
+    print("Resigning from Leadership")
     # kill client application
     #kill_client()
     
