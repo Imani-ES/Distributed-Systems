@@ -263,7 +263,7 @@ def message_handle(msg_in,socket) -> None:
         #follower recieving a leader's heartbeat
         elif Request == "HEARTBEAT":
             #verify heartbeat
-            if dm['prev_log_index'] >= len(node_info['log'])-1:#Lagger
+            if dm['prev_log_index'] > len(node_info['log']):#Lagger
                 #get consensus on who leader is
                 msg_c['request'] = "LAGGING"
                 msg_c['recipient'] = 'E'
