@@ -274,7 +274,8 @@ def message_handle(msg_in,socket) -> None:
                 most =0
                 lea = ''
                 for l in find_leader:
-                    if l in countup:
+                    count = countup
+                    if l in count:
                         countup[l] += 1
                         if countup[l] >= most:
                             most = countup[l]
