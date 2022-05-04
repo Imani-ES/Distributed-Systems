@@ -236,7 +236,6 @@ def message_handle(msg_in,socket) -> None:
                 msg_c['value'] = current_leader
                 msg_c['recipient'] = 'Controller'
                 send_message(msg_c,group,socket,port)
-
     #node recieving message from other node
     elif node_info['state'] != 'd':
         #follower recieving a candidate's vote request 
@@ -261,16 +260,20 @@ def message_handle(msg_in,socket) -> None:
         elif Request == "!LEADME":
             print(f"{dm['sender_name']} is a hater")
         #follower recieving a leader's heartbeat
-        elif Request == "HEARTBEAT":
-            #Need state if node gets stuck in 
-            #verify heartbeat
-            if dm['prev_log_index'] > len(node_info['log']):#Lagger
+        elif Request == "HEARTBEAT":#verify heartbeat
+            #If node is lagging with respects to logs
+            if dm['prev_log_index'] > len(node_info['log']):#Send false success, broadcast Lagging 
+                #send a failure msg to leader       
+                msg_c['request'] = "Append_Reply"
+                msg_c['recipient'] = dm['sender_name']
+                msg_c['success'] = 'false'
+                send_message(msg_c,group,socket,port)
                 #get consensus on who leader is
                 msg_c['request'] = "LAGGING"
                 msg_c['recipient'] = 'E'
                 send_message(msg_c,group,socket,port)
                 #wait a few in this message thread while nodes respond
-                time.sleep(1)
+                time.sleep(.5)
                 #choose most popular leader as current leader
                 print(f"Possible Leaders: {find_leader}")
                 countup = {}
@@ -291,14 +294,15 @@ def message_handle(msg_in,socket) -> None:
                 msg_c['request'] = "CATCHMEUP"
                 msg_c['recipient'] = current_leader
                 send_message(msg_c,group,socket,port)
-            elif dm['term'] >= node_info['term'] and node_info['log'][dm['prev_log_index']]['term'] <= dm['prev_log_term']:
+            #Valid Heartbeat, caught up with logs
+            elif dm['term'] >= node_info['term'] and node_info['log'][dm['prev_log_index']]['term'] <= dm['prev_log_term']:#copy log
                 leaderexists = 1
                 node_info['term'] = dm['term']
                 termvotes = 0
                 node_info['state'] ='f'               
                 current_leader = dm['sender_name']
                 node_info['votedFor'] = ''
-                #print(f"All hail {dm['sender_name']}")
+                print(f"All hail {dm['sender_name']}")
                 #if heartbeat has a log, add it to follower's log
                 if dm['entry']:
                     node_info['log'].append(dm['entry'])
@@ -307,7 +311,8 @@ def message_handle(msg_in,socket) -> None:
                 msg_c['recipient'] = dm['sender_name']
                 msg_c['success'] = 'true'
                 send_message(msg_c,group,socket,port)
-            else:#invalid heartbeat     
+            #invalid heartbeat
+            else:#send failure RPC     
                 print(f"invalid heartbeat: {dm['sender_name']}")
                 print(f"My state: {node_info}, \n Leader msg {dm}") 
                 #send a failure msg to leader       
@@ -315,9 +320,8 @@ def message_handle(msg_in,socket) -> None:
                 msg_c['recipient'] = dm['sender_name']
                 msg_c['success'] = 'false'
                 send_message(msg_c,group,socket,port)
-                
         #Node recieving message from Lagging Node
-        elif Request == "LAGGING":
+        elif Request == "LAGGING":#send LEADER_INFO to lagging node
             if current_leader != '':
                 msg_c['request']= 'LEADER_INFO'
                 msg_c['key'] = "LEADER"
@@ -325,11 +329,11 @@ def message_handle(msg_in,socket) -> None:
                 msg_c['recipient'] = dm['sender_name']
                 send_message(msg_c,group,socket,port)
         #From node to Lagging Node
-        elif Request == "LEADER_INFO" and dm['recipient'] == name:
+        elif Request == "LEADER_INFO" and dm['recipient'] == name:#Get concensus from nodes on leader
             if msg_c['value']:
                 find_leader.append(msg_c['value'])
         #Lagging node to Leader
-        elif Request == "CATCHMEUP":
+        elif Request == "CATCHMEUP": #Leader sending CATCHUP to lagger
             #send entire log history to lagger
             msg_c['request'] = "CATCHUP"
             msg_c['recipient'] = current_leader
@@ -337,7 +341,7 @@ def message_handle(msg_in,socket) -> None:
             msg_c['value'] = node_info['log']
             send_message(msg_c,group,socket,port)
         #Leader trying to CATCHUP Lagging Node
-        elif Request == "CATCHUP":
+        elif Request == "CATCHUP":  #Lagger recieving CATCHUP from leader
             #update log with leaders log
             if dm['sender_name'] == current_leader:
                 node_info['log'] = msg_c['value']

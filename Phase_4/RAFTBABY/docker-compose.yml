@@ -18,7 +18,6 @@ services:
         - heartrate=.25
         - client_host=220.1.1.1
         - client_port=5000
-
     node2:
       container_name: Node2
       build: Node/.
@@ -31,7 +30,6 @@ services:
         - heartrate=.25
         - client_host=220.1.1.1
         - client_port=5000
-
     node3:
       container_name: Node3
       build: Node/.
@@ -44,7 +42,6 @@ services:
         - heartrate=.25
         - client_host=220.1.1.1
         - client_port=5000
-
     node4:
       container_name: Node4
       build: Node/.
@@ -57,7 +54,6 @@ services:
         - heartrate=.25
         - client_host=220.1.1.1
         - client_port=5000
-
     node5:
       container_name: Node5
       build: Node/.
@@ -90,12 +86,3 @@ services:
           condition:  service_started
         node5:
           condition:  service_started
-
-
-
-# Logs stored as [term, key, Value]
-# use node_info
-
-
-
-
